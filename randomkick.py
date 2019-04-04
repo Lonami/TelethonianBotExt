@@ -18,7 +18,13 @@ GROUP = 'telethonofftopic'
 DELAY = 24 * 60 * 60
 
 clicked = asyncio.Event()
-chosen = None
+
+try:
+    import pickle
+    chosen = pickle.loads(open('CHOSEN.pd', 'rb').read())
+except FileNotFoundError:
+    pickle.dump(None, open('CHOSEN.pd', 'wb'))
+    chosen = None
 
 
 async def init(bot):
@@ -27,18 +33,39 @@ async def init(bot):
         while True:
             clicked.clear()
             users = await bot.get_participants(GROUP)
-            chosen = random.choice(users)
-            chosen.name = html.escape(utils.get_display_name(chosen))
             start = time.time()
-            try:
-                await kick_user()
-            except Exception:
-                logging.exception('exception on kick user')
+            if chosen is None or not (user for user in users if chosen.id == user.id):
+                bot_user = await bot.get_me()
+                chosen = bot_user
+                while chosen == bot_user or chosen.bot:
+                    chosen = random.choice(users)
+                chosen.name = html.escape(utils.get_display_name(chosen))
+                pickle.dump(chosen, open('CHOSEN.pd', 'wb'))
+                try:
+                    await kick_user()
+                except Exception:
+                    logging.exception('exception on kick user')
+                    took = time.time() - start
+                    wait_after_clicked = 8 * 60 * 60 - took
+                    if wait_after_clicked > 0:
+                        await asyncio.sleep(DELAY - took)
 
-            took = time.time() - start
-            wait_after_clicked = 8 * 60 * 60 - took
-            if wait_after_clicked > 0:
-                await asyncio.sleep(DELAY - took)
+
+            try:
+                await asyncio.wait_for(clicked.wait(), DELAY)
+            except asyncio.TimeoutError:
+                await bot.send_message(
+                    GROUP,
+                    f'<a href="tg://user?id={chosen.id}">{chosen.name} '
+                    f'was kicked for being inactive</a>', parse_mode='html')
+
+                await bot(EditBannedRequest(GROUP, chosen.id, ChatBannedRights(
+                    until_date=datetime.timedelta(minutes=1),
+                    view_messages=True
+                )))
+
+
+
 
     async def kick_user():
         await bot.send_message(
@@ -61,15 +88,18 @@ async def init(bot):
                 view_messages=True
             )))
 
+
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
+        global chosen
         if event.data != b'alive':
             return
 
-        if event.sender_id != chosen.id:
+        if chosen is None or event.sender_id != chosen.id:
             await event.answer('Who are you again?')
             return
-
+        chosen = None
+        pickle.dump(None, open('CHOSEN.pd', 'wb'))
         clicked.set()
         await event.answer('Congrats you are saved')
         await event.edit(

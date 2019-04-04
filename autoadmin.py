@@ -3,8 +3,11 @@ from telethon import events
 
 
 # TODO Load from file
-ADMINS = {
-}
+try:
+    ADMINS = {admin_id for admin_id in open('ADMIN.txt', 'r').readlines()}
+except FileNotFoundError:
+    ADMINS = {}
+    open('ADMIN.txt', 'w').close()
 
 
 async def init(bot):
@@ -14,7 +17,7 @@ async def init(bot):
             await bot(functions.channels.EditAdminRequest(
                 await event.get_input_chat(),
                 await event.get_input_user(),
-                types.ChannelAdminRights(
+                types.ChatAdminRights(
                     #post_messages=True,
                     #add_admins=True,
                     invite_users=True,
