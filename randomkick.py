@@ -19,15 +19,36 @@ DELAY = 24 * 60 * 60
 
 clicked = asyncio.Event()
 chosen = None
+last_talked = {}
 
 
 async def init(bot):
+    global last_talked
+
+    @bot.on(events.NewMessage(GROUP))
+    async def h(e):
+        last_talked[e.sender_id] = time.time()
+
     async def kick_users():
         global chosen
         while True:
             clicked.clear()
             users = await bot.get_participants(GROUP)
-            chosen = random.choice(users)
+
+            # Delete people who talked before but have left the group
+            left = last_talked.keys() - {x.id for x in users}
+            for x in left:
+                del last_talked[x]
+
+            lo = min(last_talked.values(), default=0)
+            hi = time.time()
+            delta = hi - lo
+            if delta <= 0.0:
+                chosen = random.choice(users)
+            else:
+                weights = (1 - ((last_talked.get(x.id, lo) - lo) / delta) for x in users)
+                chosen = random.choices(users, weights)[0]
+
             chosen.name = html.escape(utils.get_display_name(chosen))
             start = time.time()
             try:
