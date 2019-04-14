@@ -17,12 +17,12 @@ class UnknownFlag(ValueError):
         self.flag = flag
 
 
-def build_substitute(pattern, repl, flags):
+def build_substitute(pattern, repl, flag_str):
     repl = repl.replace('\\/', '/').replace('\\0', '\\g<0>')
 
     count = 1
     flags = 0
-    for f in (flags or ''):
+    for f in (flag_str or ''):
         if f in 'Gg':
             count = 0
             continue
@@ -51,7 +51,12 @@ async def init(bot):
         else:
             messages = reversed(last_msgs[event.chat_id])
 
-        substitute = build_substitute(*event.pattern_match.groups())
+        try:
+            substitute = build_substitute(*event.pattern_match.groups())
+        except UnknownFlag as e:
+            await event.reply(str(e))
+            return
+
         for message in messages:
             new = substitute(message.raw_text)
             if new is None:
