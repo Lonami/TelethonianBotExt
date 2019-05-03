@@ -1,11 +1,12 @@
 import json
 import re
+import os
 
 from telethon import events
 
 # TODO Make this better
 template = "The cause of this error is most likely {cause}. To fix it you need to {solution}"
-with open("faq.json", "r", encoding="utf-8") as file:
+with open(os.path.join(os.path.dirname(__file__), "faq.json"), "r", encoding="utf-8") as file:
     errors = json.load(file)
 
 
