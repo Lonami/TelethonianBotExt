@@ -11,7 +11,7 @@ with open(os.path.join(os.path.dirname(__file__), "faq.json"), "r", encoding="ut
 
 
 async def init(bot):
-    @bot.on(events.ChatAction)
+    @bot.on(events.NewMessage)
     async def handler(event):
         for error in errors:
             if re.search(error["pattern"], event.raw_text, flags=re.IGNORECASE):
