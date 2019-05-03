@@ -1,5 +1,5 @@
 import asyncio
-from . import autoadmin, randomkick, sed,faq
+from . import autoadmin, randomkick, sed, faq
 
 
 # TODO Autodetect modules and init them all

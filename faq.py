@@ -5,8 +5,8 @@ from telethon import events
 
 # TODO Make this better
 template = "The cause of this error is most likely {cause}. To fix it you need to {solution}"
-with open("faq.json", "r", encoding="utf-8") as out:
-    errors = json.load(out)
+with open("faq.json", "r", encoding="utf-8") as file:
+    errors = json.load(file)
 
 
 async def init(bot):
