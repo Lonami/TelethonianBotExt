@@ -1,7 +1,7 @@
 [
   {
     "error": "database is locked",
-    "cause": "using the same session in multiple scripts",
+    "cause": "using the same session in multiple scripts (or having another older process using the same session file)",
     "solution": "using one session file per script",
     "pattern": "database is locked"
   },
