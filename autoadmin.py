@@ -1,3 +1,5 @@
+import os
+
 from telethon.tl import functions, types
 from telethon import events
 
@@ -6,7 +8,8 @@ from telethon import events
 #    5678 Friend of Lonami
 #
 # (We strip whitespace and split to get only the number)
-with open('admins.txt') as f:
+
+with open(os.path.join(os.path.dirname(__file__), 'admins.txt')) as f:
     ADMINS = {
         int(line.strip().split()[0])
         for line in f
