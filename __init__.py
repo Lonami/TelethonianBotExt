@@ -1,5 +1,5 @@
 import asyncio
-from . import autoadmin, randomkick, sed, faq
+from . import autoadmin, randomkick, sed, faq, ref
 
 
 # TODO Autodetect modules and init them all
@@ -9,5 +9,6 @@ def init(bot):
         autoadmin.init(bot),
         randomkick.init(bot),
         sed.init(bot),
-        faq.init(bot)
+        faq.init(bot),
+        ref.init(bot)
     ]))
