@@ -97,5 +97,5 @@ async def init(bot):
             f'<a href="tg://user?id={chosen.id}">Congrats '
             f'{chosen.name} you made it!</a>', parse_mode='html')
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(kick_users())
+    # TODO This task is not properly terminated on disconnect
+    bot.loop.create_task(kick_users())
