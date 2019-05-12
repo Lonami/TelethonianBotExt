@@ -119,7 +119,7 @@ async def init(bot):
 
             # Wait until we disconnect or a timeout occurs
             try:
-                await asyncio.wait_for(bot.disconnected, timeout=5, loop=bot.loop)
+                await asyncio.wait_for(bot.disconnected, timeout=UPDATE_INTERVAL, loop=bot.loop)
             except asyncio.TimeoutError:
                 pass
 
