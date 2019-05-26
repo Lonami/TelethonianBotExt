@@ -70,6 +70,20 @@ async def init(bot):
             reply_to=event.reply_to_msg_id
         )
 
+    @bot.on(events.NewMessage(pattern='(?i)#summary (.+)', forwards=False))
+    async def handler(event):
+        """#summary what: Send summary link for client, events or objects."""
+        await event.delete()
+        what = event.pattern_match.group(1).lower()
+        if what not in ('client', 'events', 'objects'):
+            return
+
+        await event.respond(
+            f'See the [reference summary for "{what}"](https://docs.telethon.dev/'
+            f'en/latest/quick-references/{what}-reference.html)',
+            reply_to=event.reply_to_msg_id
+        )
+
     @bot.on(events.InlineQuery)
     async def handler(event):
         builder = event.builder
