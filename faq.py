@@ -9,6 +9,7 @@ template = "The cause of this error is most likely {cause}. To fix it you need t
 with open(os.path.join(os.path.dirname(__file__), "faq.json"), "r", encoding="utf-8") as file:
     errors = json.load(file)
 
+FAQ_URL = 'https://docs.telethon.dev/en/latest/quick-references/faq.html'
 
 async def init(bot):
     @bot.on(events.NewMessage)
@@ -17,3 +18,10 @@ async def init(bot):
             if re.search(error["pattern"], event.raw_text, flags=re.IGNORECASE):
                 await event.reply(template.format(cause=error["cause"], solution=error["solution"]))
                 break
+
+    @bot.on(events.NewMessage(pattern='#faq'))
+    async def handler(event):
+        await event.delete()
+        await event.respond(
+            f"You can find a solution to your problem in [Telethon's FAQ]({FAQ_URL})
+        )
