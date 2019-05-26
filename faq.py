@@ -21,6 +21,7 @@ async def init(bot):
 
     @bot.on(events.NewMessage(pattern='#faq'))
     async def handler(event):
+        """#faq: Tell the user that their problem is in the faq."""
         await event.delete()
         await event.respond(
             f"You can find a solution to your problem in [Telethon's FAQ]({FAQ_URL})
