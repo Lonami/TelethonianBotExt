@@ -2,6 +2,7 @@ import asyncio
 import html
 import sys
 import typing
+import logging
 import xml.dom.minidom
 
 REPOSITORY = b'LonamiWebs/Telethon'
@@ -56,7 +57,12 @@ async def fetch_feed() -> XML:
 
     # Ensure it's OK
     index = headers.index(b'Status:') + 8
-    status = headers[index:headers.index(b'\r', index)]
+    try:
+        status = headers[index:headers.index(b'\r', index)]
+    except ValueError:
+        logging.warning('Checking GitHub feed failed: %s', status)
+        raise
+
     if headers[index:index + 6] != b'200 OK':
         raise ValueError('Bad status code: {}'.format(status))
 
@@ -88,7 +94,22 @@ async def init(bot):
     async def check_feed():
         nonlocal last_commit
         while bot.is_connected():
-            feed = await fetch_feed()
+            # Wait until we disconnect or a timeout occurs
+            try:
+                await asyncio.wait_for(
+                    bot.disconnected,
+                    timeout=UPDATE_INTERVAL,
+                    loop=bot.loop
+                )
+            except asyncio.TimeoutError:
+                pass
+
+            try:
+                feed = await fetch_feed()
+            except Exception as e:
+                logging.warning('Failed to fetch RSS feed %s', e)
+                continue
+
             new = []
             for entry in feed.tags('entry'):
                 commit = get_commit_hash(entry)
@@ -116,16 +137,6 @@ async def init(bot):
 
             # Update the last commit to not re-send it
             last_commit = get_commit_hash(feed.tag('entry'))
-
-            # Wait until we disconnect or a timeout occurs
-            try:
-                await asyncio.wait_for(
-                    bot.disconnected,
-                    timeout=UPDATE_INTERVAL,
-                    loop=bot.loop
-                )
-            except asyncio.TimeoutError:
-                pass
 
     # TODO This task is not properly terminated on disconnect
     bot.loop.create_task(check_feed())
