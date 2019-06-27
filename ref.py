@@ -7,9 +7,9 @@ from telethon import TelegramClient, custom, events
 from telethon.extensions import markdown
 
 DOCS = 'TL Reference for [{}](https://lonamiwebs.github.io/Telethon/?q={})'
-DOCS_CLIENT = 'https://telethon.readthedocs.io/en/latest/modules/client.html#'
+DOCS_CLIENT = 'https://docs.telethon.dev/en/latest/modules/client.html#'
 DOCS_MESSAGE = (
-    'https://telethon.readthedocs.io/en/latest/'
+    'https://docs.telethon.dev/en/latest/'
     'modules/custom.html#telethon.tl.custom.message.Message.'
 )
 
