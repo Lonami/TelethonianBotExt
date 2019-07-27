@@ -44,7 +44,7 @@ class FeedChecker:
             f'Host: {host}\r\n'
             f'\r\n'
         ).encode()
-        self._last_id = None
+        self._seen_ids = set()
 
     async def _fetch(self):
         # We could use `aiohttp` but this is more fun
@@ -101,9 +101,14 @@ class FeedChecker:
     async def poll(self):
         feed = await self._fetch()
 
-        last = self._last_id
-        self._last_id = feed.tag('entry').tag('id').text
-        return itertools.takewhile(lambda e: e.tag('id').text != last, feed.tags('entry'))
+        new = []
+        for entry in feed.tags('entry'):
+            entry_id = entry.tag('id').text
+            if entry_id not in self._seen_ids:
+                self._seen_ids.add(entry_id)
+                new.append(entry)
+
+        return new
 
 
 def fmt_github(entry):
