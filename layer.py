@@ -4,11 +4,11 @@ import sys
 
 from telethon import functions
 
-URI = b'telegramdesktop/tdesktop/dev/Telegram/Resources/scheme.tl'
+URI = b'telegramdesktop/tdesktop/dev/Telegram/Resources/tl/api.tl'
 SEND_TO = 'TelethonOffTopic'
 UPDATE_INTERVAL = 24 * 60 * 60
 MESSAGE = '@lonami, [a new layer is available](https://github.com' \
-          '/telegramdesktop/tdesktop/blob/dev/Telegram/Resources/scheme.tl)'
+          '/telegramdesktop/tdesktop/blob/dev/Telegram/Resources/tl/api.tl)'
 
 
 async def fetch():
