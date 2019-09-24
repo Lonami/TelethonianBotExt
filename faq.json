@@ -2,19 +2,19 @@
   {
     "error": "database is locked",
     "cause": "using the same session in multiple scripts (or having another older process using the same session file)",
-    "solution": "using one session file per script",
+    "solution": "use one session file per script (or per client)",
     "pattern": "database is locked"
   },
   {
     "error": "RuntimeWarning: coroutine 'Method' was never awaited",
-    "cause": "not using \"await\" before calling the method",
-    "solution": "adding await before calling an async method",
+    "cause": "not using `await` before calling the method",
+    "solution": "add `await` before calling an `async def`",
     "pattern": "RuntimeWarning: coroutine '.*' was never awaited"
   },
   {
     "error": "event doesn't work and there is no error",
-    "cause": "errors that happen inside events are hidden by default",
-    "solution": "enable logging and check the error and fix it",
+    "cause": "that errors inside event handlers are not logged by default",
+    "solution": "enable logging and read the error to fix it",
     "pattern": "#event?slogging"
   }
 ]
