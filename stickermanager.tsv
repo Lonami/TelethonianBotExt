@@ -1,0 +1,45 @@
+# Tab-separated file with three columns: int	int	str
+
+# Settings
+# The title for the stickerpack.
+sticker title	-	telethon packtopic
+
+# The shortname for the stickerpack.
+sticker short	-	telethonpacktopic
+
+# The user ID who should own the stickerpack.
+sticker owner	10885151	-
+
+# The number of votes required for a sticker to be approved.
+votes required	6	-
+
+# The vote weight for users who aren't listed.
+default weight	0.1	-
+
+# Comma-separated list of chat IDs where the bot is enabled.
+allowed chats - -1001200633650
+
+# Users
+# Format:
+# user id	weight	name
+10885151 	10	lonami
+413897993	1	Zac
+84359547 	1	tulir
+568292500	1	ändrew
+416195206	1	Alex
+400319287	1	painor
+52302719 	1	Somebody
+234480941	1	twit
+172811422	1	Simon
+170256543	1	drunktimelord
+544603901	1	Joel B
+62056065 	1	JosXa
+132315889	1	Manuel
+124191486	1	mpa
+581171836	1	SAND STORM
+897808574	1	JeePee
+443477380	1	Николай
+524253028	1	Алексей
+48012045 	1	mr.slavik
+7351948  	1	SpEcHIDe
+232787997	1	kate
