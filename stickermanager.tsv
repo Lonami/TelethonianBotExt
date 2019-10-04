@@ -5,10 +5,10 @@
 sticker title	-	telethon packtopic
 
 # The shortname for the stickerpack.
-sticker short	-	telethonpacktopic
+sticker short	-	telethonpacktopic_by_telethonianbot
 
 # The user ID who should own the stickerpack.
-sticker owner	10885151	-
+sticker owner	-	10885151
 
 # The number of votes required for a sticker to be approved.
 votes required	6	-
@@ -17,7 +17,7 @@ votes required	6	-
 default weight	0.1	-
 
 # Comma-separated list of chat IDs where the bot is enabled.
-allowed chats - -1001200633650
+allowed chats	-	-1001200633650
 
 # Users
 # Format:
