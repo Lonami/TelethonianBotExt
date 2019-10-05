@@ -25,6 +25,8 @@ last_talked = {}
 async def init(bot):
     global last_talked
 
+    self_id = await bot.get_peer_id('me')
+
     @bot.on(events.NewMessage(GROUP))
     async def h(e):
         last_talked[e.sender_id] = time.time()
@@ -62,12 +64,19 @@ async def init(bot):
                 await asyncio.sleep(DELAY - took)
 
     async def kick_user():
-        await bot.send_message(
+        event = await bot.send_message(
             GROUP,
             '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
             ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
             buttons=Button.inline('click me to stay', b'alive'), parse_mode='html'
         )
+
+        if chosen.id == self_id:
+            await asyncio.sleep(random.randint(10, 20))
+            await edit_save(event)
+            async with bot.action(GROUP, 'typing'):
+                await asyncio.sleep(random.randint(7, 10))
+            await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
         try:
             await asyncio.wait_for(clicked.wait(), DELAY)
@@ -91,8 +100,13 @@ async def init(bot):
             await event.answer('Who are you again?')
             return
 
-        clicked.set()
         await event.answer('Congrats you are saved')
+        await edit_save(event)
+
+    async def edit_save(event):
+        # Edits the kick "event" or message and updates the clicked/last talked time
+        clicked.set()
+        last_talked[chosen.id] = time.time()
         await event.edit(
             f'<a href="tg://user?id={chosen.id}">Congrats '
             f'{chosen.name} you made it!</a>', parse_mode='html')
