@@ -8,7 +8,6 @@ import time
 
 from telethon import events, utils
 from telethon.tl.custom import Button
-from telethon.tl.functions.channels import EditBannedRequest
 from telethon.tl.types import ChatBannedRights
 
 logging.basicConfig(level=logging.INFO)
@@ -86,10 +85,7 @@ async def init(bot):
                 f'<a href="tg://user?id={chosen.id}">{chosen.name} '
                 f'was kicked for being inactive</a>', parse_mode='html')
 
-            await bot(EditBannedRequest(GROUP, chosen.id, ChatBannedRights(
-                until_date=datetime.timedelta(minutes=1),
-                view_messages=True
-            )))
+            await bot.kick_participant(GROUP, chosen.id)
 
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
