@@ -8,7 +8,6 @@ import time
 
 from telethon import events, utils
 from telethon.tl.custom import Button
-from telethon.tl.functions.channels import EditBannedRequest
 from telethon.tl.types import ChatBannedRights
 
 logging.basicConfig(level=logging.INFO)
