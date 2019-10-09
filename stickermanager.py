@@ -189,6 +189,7 @@ async def init(bot: TelegramClient) -> None:
         elif last_accepted + ADD_COOLDOWN > int(time()):
             await event.reply('Less than 24 hours have passed since the '
                               'previous sticker was added.')
+            return
 
         emoji = event.pattern_match.group(1) or '\u2728'
         try:
@@ -276,7 +277,7 @@ async def init(bot: TelegramClient) -> None:
         if weight == 0:
             await event.answer('You don\'t have the permission to vote.')
             return
-        if event.data == b'-':
+        if event.data == b'addsticker/-':
             weight = -weight
 
         displayname = displayname or escape_html((await event.get_sender()).first_name)
@@ -287,6 +288,7 @@ async def init(bot: TelegramClient) -> None:
                 return
         except KeyError:
             pass
+
         current_vote['votes'][event.sender_id] = VoteData(weight=weight, displayname=displayname)
 
         scores = calculate_scores()
@@ -294,7 +296,8 @@ async def init(bot: TelegramClient) -> None:
 
         if abs(scores.sum) >= VOTES_REQUIRED:
             current_vote_status.set()
-            res = "accepted" if await _locked_finish_poll() else "rejected"
+            accepted = await _locked_finish_poll()
+            res = "accepted" if accepted else "rejected"
             await event.answer(f'Successfully voted {fancy_round(weight)},'
                                f' which made the sticker be {res} \U0001f389')
         else:
