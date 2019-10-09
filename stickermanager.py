@@ -3,6 +3,7 @@ import json
 import asyncio
 from time import time
 from io import BytesIO
+from pathlib import Path
 from html import escape as escape_html
 from typing import Union, NamedTuple, Callable, Optional, Tuple
 
@@ -45,6 +46,11 @@ DOWN = '\U0001f53d'
 
 POLL_TIMEOUT = ADD_COOLDOWN = 24 * 60 * 60
 
+BASE_DIR = Path(__file__).resolve().parent
+CONFIG_FILE = BASE_DIR.joinpath("stickermanager.tsv")
+CACHE_FILE = BASE_DIR.joinpath("stickermanager.json")
+DATA_FILE_FORMAT: str = "stickermanager.{ts}.dat"
+
 VoteData = NamedTuple('VoteData', weight=int, displayname=str)
 Scores = NamedTuple('Scores', sum=int, yes=int, no=int)
 
@@ -54,14 +60,14 @@ current_vote_status: asyncio.Event = asyncio.Event()
 last_accepted: int = 0
 sticker_pack = None
 
-with open(os.path.join(os.path.dirname(__file__), 'stickermanager.tsv')) as f:
+with open(CONFIG_FILE) as f:
     WEIGHTS = {
         int(uid) if uid.strip().isnumeric() else uid:
             (0 if weight == '-' else float(weight), None if name == '-' else name)
         for uid, weight, name
         in (line.strip().split('\t', 2)
             for line in f
-            if len(line) > 0 and not line[0] == '#' and not line.isspace())
+            if line and not line.startswith('#') and not line.isspace())
     }
 
     VOTES_REQUIRED = WEIGHTS.pop('votes required')[0]
@@ -78,7 +84,7 @@ async def create_sticker_pack(bot: TelegramClient, item: InputStickerSetItem
                               ) -> Tuple[bool, Optional[StickerSet]]:
     global sticker_pack
     try:
-        with open(os.path.join(os.path.dirname(__file__), 'stickermanager.json')) as file:
+        with open(CACHE_FILE) as file:
             sp_data = json.load(file)
             sticker_pack = InputStickerSetID(id=sp_data['id'], access_hash=sp_data['access_hash'])
         return False, None
@@ -91,7 +97,7 @@ async def create_sticker_pack(bot: TelegramClient, item: InputStickerSetItem
         ))
         sticker_pack = InputStickerSetID(id=stickerset.set.id,
                                          access_hash=stickerset.set.access_hash)
-        with open(os.path.join(os.path.dirname(__file__), 'stickermanager.json'), 'w') as file:
+        with open(CACHE_FILE, 'w') as file:
             json.dump({
                 'id': stickerset.set.id,
                 'access_hash': stickerset.set.access_hash
@@ -197,7 +203,7 @@ async def init(bot: TelegramClient) -> None:
                                    orig_evt.sticker.mime_type == 'application/x-tgsticker'):
             return
 
-        filename = os.path.join(os.path.dirname(__file__), f'stickermanager.{int(time())}.dat')
+        filename = Path(DATA_FILE_FORMAT.format(ts=int(time())))
         await orig_evt.download_media(filename)
 
         delete_task = asyncio.ensure_future(event.delete(), loop=bot.loop)
