@@ -11,7 +11,7 @@ from PIL import Image
 from telethon.tl.custom import Message, Button
 from telethon.tl.types import (
     InputStickerSetID, InputStickerSetItem, InputDocument,
-    InputMediaUploadedDocument, InputPeerSelf, DocumentAttributeAnimated
+    InputMediaUploadedDocument, InputPeerSelf
 )
 from telethon.tl.types.messages import StickerSet
 from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerToSetRequest
@@ -43,11 +43,15 @@ RESULT_REJECTED = 'The sticker was rejected from <a href="{pack_link}">the pack<
 UP = '\U0001f53c'
 DOWN = '\U0001f53d'
 
+POLL_TIMEOUT = 10
+
 VoteData = NamedTuple('VoteData', weight=int, displayname=str)
 Scores = NamedTuple('Scores', sum=int, yes=int, no=int)
 
 current_vote: Optional[dict] = None
 current_vote_lock: asyncio.Lock = asyncio.Lock()
+current_vote_status: asyncio.Event = asyncio.Event()
+last_accepted: int = 0
 sticker_pack = None
 
 with open(os.path.join(os.path.dirname(__file__), 'stickermanager.tsv')) as f:
@@ -65,7 +69,7 @@ with open(os.path.join(os.path.dirname(__file__), 'stickermanager.tsv')) as f:
     STICKER_PACK_TITLE = WEIGHTS.pop('sticker title')[1]
     STICKER_PACK_SHORT_NAME = WEIGHTS.pop('sticker short')[1]
     ADMIN_USER_ID = int(WEIGHTS.pop('sticker owner')[1])
-    ALLOWED_CHATS = [int(gid.strip())
+    ALLOWED_CHATS = [int(gid)
                      for gid in WEIGHTS.pop('allowed chats')[1].split(',')
                      if not gid.isspace()]
 
@@ -104,15 +108,10 @@ async def add_sticker_to_pack(bot: TelegramClient) -> Tuple[StickerSet, InputDoc
     else:
         img = Image.open(current_vote['filepath'])
         w, h = img.size
-        if w > 512 or h > 512:
-            img.thumbnail((512, 512), Image.ANTIALIAS)
+        if w > h:
+            img = img.resize((512, int(h * (512 / w))), Image.ANTIALIAS)
         else:
-            if w > h:
-                img = img.resize((512, int(h * (512 / w))), Image.ANTIALIAS)
-            elif w < h:
-                img = img.resize((int((w * (512 / h))), 512), Image.ANTIALIAS)
-            else:
-                img = img.resize((512, 512), Image.ANTIALIAS)
+            img = img.resize((int((w * (512 / h))), 512), Image.ANTIALIAS)
         dat = BytesIO()
         img.save(dat, format='PNG')
         file = await bot.upload_file(dat.getvalue())
@@ -186,6 +185,8 @@ async def init(bot: TelegramClient) -> None:
         try:
             _, sender_name = WEIGHTS[event.sender_id]
         except KeyError:
+            await event.reply('Please upgrade to a Telethon OffTopic Premium '
+                              'Membership to start sticker polls.')
             return
         orig_evt: Message = await event.get_reply_message()
         # TODO add support for animated stickers
@@ -196,7 +197,8 @@ async def init(bot: TelegramClient) -> None:
         filename = os.path.join(os.path.dirname(__file__), f'stickermanager.{int(time())}.dat')
         await orig_evt.download_media(filename)
 
-        asyncio.ensure_future(event.delete(), loop=bot.loop)
+        delete_task = asyncio.ensure_future(event.delete(), loop=bot.loop)
+        current_vote_status.clear()
         current_vote = {
             'chat': event.chat_id,
             'sender_id': event.sender_id,
@@ -210,12 +212,38 @@ async def init(bot: TelegramClient) -> None:
         }
         reply_evt: Message = await orig_evt.reply(
             POLL_TEMPLATE.format_map(get_template_data()),
-            buttons=[Button.inline(UP, b'+'), Button.inline(DOWN, b'-')],
+            buttons=[Button.inline(UP, b'addsticker/+'), Button.inline(DOWN, b'addsticker/-')],
             parse_mode='html')
+        pin_task = asyncio.ensure_future(reply_evt.pin(), loop=bot.loop)
         current_vote['poll'] = reply_evt.id
-        asyncio.ensure_future(reply_evt.pin(notify=True), loop=bot.loop)
+        wait_task = asyncio.ensure_future(wait_for_poll(), loop=bot.loop)
+        await asyncio.gather(delete_task, pin_task, wait_task, loop=bot.loop)
 
-    @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (b'+', b'-')))
+    async def wait_for_poll() -> None:
+        try:
+            await asyncio.wait_for(current_vote_status.wait(), timeout=POLL_TIMEOUT)
+        except asyncio.TimeoutError:
+            async with current_vote_lock:
+                await finish_poll()
+
+    async def finish_poll() -> bool:
+        global current_vote
+
+        accepted = current_vote["score"] >= VOTES_REQUIRED
+        result_tpl = RESULT_ADDED if accepted else RESULT_REJECTED
+        current_vote['result'] = result_tpl.format(get_template_data())
+        await bot.edit_message(current_vote['chat'], current_vote['poll'],
+                               POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
+                               parse_mode='html')
+        if accepted:
+            pack, document = await add_sticker_to_pack(bot)
+            await bot.send_file(current_vote['chat'], file=document, reply_to=current_vote['poll'])
+        current_vote = None
+        asyncio.ensure_future(bot.pin_message(current_vote['chat'], message=None), loop=bot.loop)
+        return accepted
+
+    @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (b'addsticker/+',
+                                                                                 b'addsticker/-')))
     async def vote_poll(event: events.CallbackQuery.Event) -> None:
         if not current_vote or current_vote['poll'] != event.message_id:
             await event.answer('That poll is closed.')
@@ -252,21 +280,10 @@ async def init(bot: TelegramClient) -> None:
         current_vote['score'] = scores.sum
 
         if abs(scores.sum) >= VOTES_REQUIRED:
-            if scores.sum > 0:
-                current_vote['result'] = RESULT_ADDED.format_map(get_template_data())
-                res = "accepted"
-            else:
-                current_vote['result'] = RESULT_REJECTED.format_map(get_template_data())
-                res = "rejected"
-            await bot.edit_message(current_vote['chat'], current_vote['poll'],
-                                   POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
-                                   parse_mode='html')
+            current_vote_status.set()
+            res = "accepted" if await finish_poll() else "rejected"
             await event.answer(f'Successfully voted {fancy_round(weight)},'
                                f' which made the sticker be {res} \U0001f389')
-            if res == "accepted":
-                pack, document = await add_sticker_to_pack(bot)
-                await event.respond(file=document, reply_to=current_vote['poll'])
-            current_vote = None
         else:
             await bot.edit_message(current_vote['chat'], current_vote['poll'],
                                    POLL_TEMPLATE.format_map(get_template_data()),
