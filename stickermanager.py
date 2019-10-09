@@ -260,7 +260,7 @@ async def init(bot: TelegramClient) -> None:
         pin_task = asyncio.ensure_future(reply_evt.pin(), loop=bot.loop)
         current_vote['poll'] = reply_evt.id
         asyncio.ensure_future(wait_for_poll(), loop=bot.loop)
-        # await asyncio.gather(delete_task, pin_task, loop=bot.loop)
+        await asyncio.gather(delete_task, pin_task, loop=bot.loop)
 
     async def wait_for_poll(timeout: int = POLL_TIMEOUT) -> None:
         try:
@@ -289,7 +289,7 @@ async def init(bot: TelegramClient) -> None:
             await bot.send_file(current_vote['chat'], file=document, reply_to=current_vote['poll'])
             last_accepted = int(time())
         current_vote = None
-        # await unpin_task
+        await unpin_task
         return accepted
 
     @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (UP_DAT, DOWN_DAT)))
