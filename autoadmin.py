@@ -31,5 +31,4 @@ async def init(bot):
                 invite_users=True,
                 pin_messages=True,
                 add_admins=False,
-                title=ADMINS.get(event.user_id, "admin")
             )
