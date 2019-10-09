@@ -43,7 +43,7 @@ RESULT_REJECTED = 'The sticker was rejected from <a href="{pack_link}">the pack<
 UP = '\U0001f53c'
 DOWN = '\U0001f53d'
 
-POLL_TIMEOUT = 10
+POLL_TIMEOUT = ADD_COOLDOWN = 24 * 60 * 60
 
 VoteData = NamedTuple('VoteData', weight=int, displayname=str)
 Scores = NamedTuple('Scores', sum=int, yes=int, no=int)
@@ -172,14 +172,17 @@ async def init(bot: TelegramClient) -> None:
             return
 
         async with current_vote_lock:
-            await start_poll_int(event)
+            await _locked_start_poll(event)
 
-    async def start_poll_int(event: Union[events.NewMessage.Event, Message]) -> None:
+    async def _locked_start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
         global current_vote
 
         if current_vote:
             await event.reply('There\'s already an ongoing sticker poll.')
             return
+        elif last_accepted + ADD_COOLDOWN > int(time()):
+            await event.reply('Less than 24 hours have passed since the '
+                              'previous sticker was added.')
 
         emoji = event.pattern_match.group(1) or '\u2728'
         try:
@@ -217,29 +220,33 @@ async def init(bot: TelegramClient) -> None:
         pin_task = asyncio.ensure_future(reply_evt.pin(), loop=bot.loop)
         current_vote['poll'] = reply_evt.id
         wait_task = asyncio.ensure_future(wait_for_poll(), loop=bot.loop)
-        await asyncio.gather(delete_task, pin_task, wait_task, loop=bot.loop)
+        await asyncio.gather(delete_task, pin_task, loop=bot.loop)
 
     async def wait_for_poll() -> None:
         try:
             await asyncio.wait_for(current_vote_status.wait(), timeout=POLL_TIMEOUT)
         except asyncio.TimeoutError:
             async with current_vote_lock:
-                await finish_poll()
+                await _locked_finish_poll()
 
-    async def finish_poll() -> bool:
-        global current_vote
+    async def _locked_finish_poll() -> bool:
+        global current_vote, last_accepted
+
+        if not current_vote:
+            return False
 
         accepted = current_vote["score"] >= VOTES_REQUIRED
         result_tpl = RESULT_ADDED if accepted else RESULT_REJECTED
-        current_vote['result'] = result_tpl.format(get_template_data())
+        current_vote['result'] = result_tpl.format_map(get_template_data())
         await bot.edit_message(current_vote['chat'], current_vote['poll'],
                                POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
                                parse_mode='html')
         if accepted:
             pack, document = await add_sticker_to_pack(bot)
             await bot.send_file(current_vote['chat'], file=document, reply_to=current_vote['poll'])
+            last_accepted = int(time())
+        await bot.pin_message(current_vote['chat'], message=None)
         current_vote = None
-        asyncio.ensure_future(bot.pin_message(current_vote['chat'], message=None), loop=bot.loop)
         return accepted
 
     @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (b'addsticker/+',
@@ -250,9 +257,9 @@ async def init(bot: TelegramClient) -> None:
             return
 
         async with current_vote_lock:
-            await vote_poll_int(event)
+            await _locked_vote_poll(event)
 
-    async def vote_poll_int(event: events.CallbackQuery.Event) -> None:
+    async def _locked_vote_poll(event: events.CallbackQuery.Event) -> None:
         global current_vote
 
         if not current_vote or current_vote['poll'] != event.message_id:
@@ -281,7 +288,7 @@ async def init(bot: TelegramClient) -> None:
 
         if abs(scores.sum) >= VOTES_REQUIRED:
             current_vote_status.set()
-            res = "accepted" if await finish_poll() else "rejected"
+            res = "accepted" if await _locked_finish_poll() else "rejected"
             await event.answer(f'Successfully voted {fancy_round(weight)},'
                                f' which made the sticker be {res} \U0001f389')
         else:
