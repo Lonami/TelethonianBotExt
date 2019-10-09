@@ -11,12 +11,13 @@ from PIL import Image
 
 from telethon.tl.custom import Message, Button
 from telethon.tl.types import (
-    InputStickerSetID, InputStickerSetItem, InputDocument,
-    InputMediaUploadedDocument, InputPeerSelf
+    InputStickerSetID, InputStickerSetShortName, InputStickerSetItem,
+    InputDocument, InputMediaUploadedDocument, InputPeerSelf
 )
 from telethon.tl.types.messages import StickerSet
 from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerToSetRequest
-from telethon.tl.functions.messages import UploadMediaRequest
+from telethon.tl.functions.messages import UploadMediaRequest, GetStickerSetRequest
+from telethon.errors import StickersetInvalidError
 from telethon import events, utils, TelegramClient
 
 POLL_TEMPLATE = (
@@ -83,29 +84,52 @@ with open(CONFIG_FILE) as f:
                      if not gid.isspace()]
 
 
+def load_cache() -> None:
+    global sticker_pack, current_vote, last_accepted
+    with open(CACHE_FILE) as file:
+        data = json.load(file)
+        sp_data = data['sticker_pack']
+        if sp_data:
+            sticker_pack = InputStickerSetID(id=sp_data['id'], access_hash=sp_data['access_hash'])
+        cv_data = data['current_vote']
+        if cv_data:
+            current_vote = cv_data
+            current_vote["votes"] = {int(uid): VoteData(*data)
+                                     for uid, data in cv_data["votes"].items()}
+        last_accepted = data['last_accepted'] or 0
+
+
+def save_cache() -> None:
+    with open(CACHE_FILE, 'w') as file:
+        json.dump({
+            'sticker_pack': {
+                'id': sticker_pack.id,
+                'access_hash': sticker_pack.access_hash
+            } if sticker_pack else None,
+            'last_accepted': last_accepted,
+            'current_vote': current_vote,
+        }, file)
+
+
 async def create_sticker_pack(bot: TelegramClient, item: InputStickerSetItem
                               ) -> Tuple[bool, Optional[StickerSet]]:
-    global sticker_pack
     try:
-        with open(CACHE_FILE) as file:
-            sp_data = json.load(file)
-            sticker_pack = InputStickerSetID(id=sp_data['id'], access_hash=sp_data['access_hash'])
-        return False, None
-    except (FileNotFoundError, KeyError) as e:
+        stickerset: StickerSet = await bot(GetStickerSetRequest(
+            InputStickerSetShortName(STICKER_PACK_SHORT_NAME)))
+        created = False
+    except StickersetInvalidError:
         stickerset: StickerSet = await bot(CreateStickerSetRequest(
             user_id=ADMIN_USER_ID,
             title=STICKER_PACK_TITLE,
             short_name=STICKER_PACK_SHORT_NAME,
             stickers=[item]
         ))
-        sticker_pack = InputStickerSetID(id=stickerset.set.id,
-                                         access_hash=stickerset.set.access_hash)
-        with open(CACHE_FILE, 'w') as file:
-            json.dump({
-                'id': stickerset.set.id,
-                'access_hash': stickerset.set.access_hash
-            }, file)
-        return True, stickerset
+        created = True
+    global sticker_pack
+    sticker_pack = InputStickerSetID(id=stickerset.set.id,
+                                     access_hash=stickerset.set.access_hash)
+    save_cache()
+    return created, stickerset
 
 
 async def add_sticker_to_pack(bot: TelegramClient) -> Tuple[StickerSet, InputDocument]:
@@ -150,7 +174,8 @@ def get_template_data() -> dict:
         **current_vote,
         'votes': '',
         'yes': format_votes(lambda weight: weight > 0) or 'nobody',
-        'no': format_votes(lambda weight: weight < 0) or 'nobody'
+        'no': format_votes(lambda weight: weight < 0) or 'nobody',
+        'pack_link': f'https://t.me/addstickers/{STICKER_PACK_SHORT_NAME}',
     }
 
 
@@ -186,6 +211,7 @@ async def init(bot: TelegramClient) -> None:
 
         async with current_vote_lock:
             await _locked_start_poll(event)
+            save_cache()
 
     async def _locked_start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
         global current_vote
@@ -218,13 +244,13 @@ async def init(bot: TelegramClient) -> None:
         current_vote_status.clear()
         current_vote = {
             'chat': event.chat_id,
+            'started_at': int(time()),
             'sender_id': event.sender_id,
             'sender_name': sender_name,
             'score': 0,
             'emoji': emoji,
             'votes': {},
-            'filepath': filename,
-            'pack_link': f'https://t.me/addstickers/{STICKER_PACK_SHORT_NAME}',
+            'filepath': str(filename),
             'animated': orig_evt.sticker and orig_evt.sticker.mime_type == 'application/x-tgsticker'
         }
         reply_evt: Message = await orig_evt.reply(
@@ -233,15 +259,16 @@ async def init(bot: TelegramClient) -> None:
             parse_mode='html')
         pin_task = asyncio.ensure_future(reply_evt.pin(), loop=bot.loop)
         current_vote['poll'] = reply_evt.id
-        wait_task = asyncio.ensure_future(wait_for_poll(), loop=bot.loop)
-        await asyncio.gather(delete_task, pin_task, loop=bot.loop)
+        asyncio.ensure_future(wait_for_poll(), loop=bot.loop)
+        # await asyncio.gather(delete_task, pin_task, loop=bot.loop)
 
-    async def wait_for_poll() -> None:
+    async def wait_for_poll(timeout: int = POLL_TIMEOUT) -> None:
         try:
-            await asyncio.wait_for(current_vote_status.wait(), timeout=POLL_TIMEOUT)
+            await asyncio.wait_for(current_vote_status.wait(), timeout=timeout)
         except asyncio.TimeoutError:
             async with current_vote_lock:
                 await _locked_finish_poll()
+                save_cache()
 
     async def _locked_finish_poll() -> bool:
         global current_vote, last_accepted
@@ -249,6 +276,8 @@ async def init(bot: TelegramClient) -> None:
         if not current_vote:
             return False
 
+        unpin_task = asyncio.ensure_future(bot.pin_message(current_vote['chat'], message=None),
+                                           loop=bot.loop)
         accepted = current_vote["score"] >= VOTES_REQUIRED
         result_tpl = RESULT_ADDED if accepted else RESULT_REJECTED
         current_vote['result'] = result_tpl.format_map(get_template_data())
@@ -259,8 +288,8 @@ async def init(bot: TelegramClient) -> None:
             pack, document = await add_sticker_to_pack(bot)
             await bot.send_file(current_vote['chat'], file=document, reply_to=current_vote['poll'])
             last_accepted = int(time())
-        await bot.pin_message(current_vote['chat'], message=None)
         current_vote = None
+        # await unpin_task
         return accepted
 
     @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (UP_DAT, DOWN_DAT)))
@@ -270,6 +299,7 @@ async def init(bot: TelegramClient) -> None:
             return
         async with current_vote_lock:
             await _locked_vote_poll(event)
+            save_cache()
 
     async def _locked_vote_poll(event: events.CallbackQuery.Event) -> None:
         global current_vote
@@ -312,3 +342,13 @@ async def init(bot: TelegramClient) -> None:
                                             Button.inline(f'{DOWN} ({scores.no_count})', DOWN_DAT)],
                                    parse_mode='html')
             await event.answer(f'Successfully voted {weight}')
+
+    load_cache()
+    if current_vote:
+        remaining_time = POLL_TIMEOUT - (int(time()) - current_vote['started_at'])
+        if remaining_time < 0:
+            async with current_vote_lock:
+                await _locked_finish_poll()
+                save_cache()
+        else:
+            asyncio.ensure_future(wait_for_poll(remaining_time))
