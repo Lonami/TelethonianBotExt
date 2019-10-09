@@ -43,6 +43,8 @@ RESULT_REJECTED = 'The sticker was rejected from <a href="{pack_link}">the pack<
 
 UP = '\U0001f53c'
 DOWN = '\U0001f53d'
+UP_DAT = b'addsticker/+'
+DOWN_DAT = b'addsticker/-'
 
 POLL_TIMEOUT = ADD_COOLDOWN = 24 * 60 * 60
 
@@ -52,7 +54,8 @@ CACHE_FILE = BASE_DIR.joinpath("stickermanager.json")
 DATA_FILE_FORMAT: str = "stickermanager.{ts}.dat"
 
 VoteData = NamedTuple('VoteData', weight=int, displayname=str)
-Scores = NamedTuple('Scores', sum=int, yes=int, no=int)
+Number = Union[int, float]
+Scores = NamedTuple('Scores', sum=Number, yes=Number, no=Number, yes_count=int, no_count=int)
 
 current_vote: Optional[dict] = None
 current_vote_lock: asyncio.Lock = asyncio.Lock()
@@ -138,7 +141,7 @@ async def add_sticker_to_pack(bot: TelegramClient) -> Tuple[StickerSet, InputDoc
 
 
 def get_template_data() -> dict:
-    def format_votes(cond: Callable[[Union[int, float]], bool]) -> str:
+    def format_votes(cond: Callable[[Number], bool]) -> str:
         return ', '.join(VOTE_TEMPLATE.format(uid=uid, displayname=displayname, weight=weight)
                          for uid, (weight, displayname) in current_vote['votes'].items()
                          if cond(weight))
@@ -154,15 +157,19 @@ def get_template_data() -> dict:
 def calculate_scores() -> Scores:
     yes = 0.0
     no = 0.0
+    yes_count = 0
+    no_count = 0
     for vote in current_vote['votes'].values():
         if vote.weight > 0:
             yes += vote.weight
+            yes_count += 1
         else:
             no -= vote.weight
-    return Scores(fancy_round(yes - no), fancy_round(yes), fancy_round(no))
+            no_count += 1
+    return Scores(fancy_round(yes - no), fancy_round(yes), fancy_round(no), yes_count, no_count)
 
 
-def fancy_round(val: Union[float, int]) -> Union[float, int]:
+def fancy_round(val: Number) -> Number:
     if isinstance(val, float) and val.is_integer():
         return int(val)
     return round(val, 2)
@@ -222,7 +229,7 @@ async def init(bot: TelegramClient) -> None:
         }
         reply_evt: Message = await orig_evt.reply(
             POLL_TEMPLATE.format_map(get_template_data()),
-            buttons=[Button.inline(UP, b'addsticker/+'), Button.inline(DOWN, b'addsticker/-')],
+            buttons=[Button.inline(UP, UP_DAT), Button.inline(DOWN, DOWN_DAT)],
             parse_mode='html')
         pin_task = asyncio.ensure_future(reply_evt.pin(), loop=bot.loop)
         current_vote['poll'] = reply_evt.id
@@ -256,13 +263,11 @@ async def init(bot: TelegramClient) -> None:
         current_vote = None
         return accepted
 
-    @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (b'addsticker/+',
-                                                                                 b'addsticker/-')))
+    @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (UP_DAT, DOWN_DAT)))
     async def vote_poll(event: events.CallbackQuery.Event) -> None:
         if not current_vote or current_vote['poll'] != event.message_id:
             await event.answer('That poll is closed.')
             return
-
         async with current_vote_lock:
             await _locked_vote_poll(event)
 
@@ -303,7 +308,7 @@ async def init(bot: TelegramClient) -> None:
         else:
             await bot.edit_message(current_vote['chat'], current_vote['poll'],
                                    POLL_TEMPLATE.format_map(get_template_data()),
-                                   buttons=[Button.inline(f'{UP} ({scores.yes})', b'+'),
-                                            Button.inline(f'{DOWN} ({scores.no})', b'-')],
+                                   buttons=[Button.inline(f'{UP} ({scores.yes_count})', UP_DAT),
+                                            Button.inline(f'{DOWN} ({scores.no_count})', DOWN_DAT)],
                                    parse_mode='html')
             await event.answer(f'Successfully voted {weight}')
