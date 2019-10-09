@@ -3,38 +3,42 @@ import json
 import asyncio
 from time import time
 from io import BytesIO
-from string import Template
 from html import escape as escape_html
 from typing import Union, NamedTuple, Callable, Optional, Tuple
 
 from PIL import Image
 
 from telethon.tl.custom import Message, Button
-from telethon.tl.types import (InputStickerSetID, InputStickerSetItem, InputDocument,
-                               InputMediaUploadedDocument, InputPeerSelf, DocumentAttributeAnimated)
+from telethon.tl.types import (
+    InputStickerSetID, InputStickerSetItem, InputDocument,
+    InputMediaUploadedDocument, InputPeerSelf, DocumentAttributeAnimated
+)
 from telethon.tl.types.messages import StickerSet
 from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerToSetRequest
 from telethon.tl.functions.messages import UploadMediaRequest
 from telethon import events, utils, TelegramClient
 
-POLL_TEMPLATE = Template(
-    '<a href="tg://user?id=$sender_id">$sender_name</a> has suggested this sticker be added to the '
-    'group\'s sticker pack with the emoji $emoji.\n\n'
-    '<strong>Current result: $score</strong>\n'
-    'For: $yes\n'
-    'Against: $no')
+POLL_TEMPLATE = (
+    '<a href="tg://user?id={sender_id}">{sender_name}</a> has suggested this '
+    'sticker be added to <a href="{pack_link}">the group\'s sticker pack</a> '
+    'with the emoji {emoji}.\n\n'
+    '<strong>Current result: {score}</strong>\n'
+    'For: {yes}\n'
+    'Against: {no}'
+)
 
-POLL_FINISHED_TEMPLATE = Template(
-    '<strong>This sticker poll finished with a final score of $score. $result</strong>\n\n'
-    '<a href="tg://user?id=$sender_id">$sender_name</a> had suggested this sticker be added to the '
-    'group\'s sticker pack with the emoji $emoji.\n\n'
-    'For: $yes\n'
-    'Against: $no')
+POLL_FINISHED_TEMPLATE = (
+    '<strong>This sticker poll finished with a final score of {score}. {result}</strong>\n\n'
+    '<a href="tg://user?id={sender_id}">{sender_name}</a> had suggested this '
+    'sticker be added to the group\'s sticker pack with the emoji {emoji}.\n\n'
+    'For: {yes}\n'
+    'Against: {no}'
+)
 
-VOTE_TEMPLATE = Template('<a href="tg://user?id=$uid">$displayname</a> ($weight)')
+VOTE_TEMPLATE = '<a href="tg://user?id={uid}">{displayname}</a> ({weight})'
 
-RESULT_ADDED = 'The sticker has been added to the pack.'
-RESULT_REJECTED = 'The sticker was rejected from the pack.'
+RESULT_ADDED = 'The sticker has been added to <a href="{pack_link}">the pack</a>.'
+RESULT_REJECTED = 'The sticker was rejected from <a href="{pack_link}">the pack</a>.'
 
 UP = '\U0001f53c'
 DOWN = '\U0001f53d'
@@ -43,6 +47,7 @@ VoteData = NamedTuple('VoteData', weight=int, displayname=str)
 Scores = NamedTuple('Scores', sum=int, yes=int, no=int)
 
 current_vote: Optional[dict] = None
+current_vote_lock: asyncio.Lock = asyncio.Lock()
 sticker_pack = None
 
 with open(os.path.join(os.path.dirname(__file__), 'stickermanager.tsv')) as f:
@@ -92,7 +97,8 @@ async def create_sticker_pack(bot: TelegramClient, item: InputStickerSetItem
 
 async def add_sticker_to_pack(bot: TelegramClient) -> Tuple[StickerSet, InputDocument]:
     global sticker_pack
-    if current_vote['animated']:
+    animated = current_vote['animated']
+    if animated:
         file = await bot.upload_file(current_vote['filepath'])
         mime = 'application/x-tgsticker'
     else:
@@ -112,12 +118,13 @@ async def add_sticker_to_pack(bot: TelegramClient) -> Tuple[StickerSet, InputDoc
         file = await bot.upload_file(dat.getvalue())
         mime = 'image/png'
     os.remove(current_vote['filepath'])
-    file = InputMediaUploadedDocument(file, mime, [DocumentAttributeAnimated()])
+    file = InputMediaUploadedDocument(file, mime, [])
     document = await bot(UploadMediaRequest(InputPeerSelf(), file))
     document = utils.get_input_document(document)
     item = InputStickerSetItem(document=document, emoji=current_vote['emoji'])
     pack: Optional[StickerSet] = None
     added = False
+    # TODO add support for animated stickers
     if not sticker_pack:
         added, pack = await create_sticker_pack(bot, item)
     if not added:
@@ -126,8 +133,8 @@ async def add_sticker_to_pack(bot: TelegramClient) -> Tuple[StickerSet, InputDoc
 
 
 def get_template_data() -> dict:
-    def format_votes(cond: Callable[[int], bool]) -> str:
-        return ', '.join(VOTE_TEMPLATE.substitute(uid=uid, displayname=displayname, weight=weight)
+    def format_votes(cond: Callable[[Union[int, float]], bool]) -> str:
+        return ', '.join(VOTE_TEMPLATE.format(uid=uid, displayname=displayname, weight=weight)
                          for uid, (weight, displayname) in current_vote['votes'].items()
                          if cond(weight))
 
@@ -140,35 +147,50 @@ def get_template_data() -> dict:
 
 
 def calculate_scores() -> Scores:
-    yes = 0
-    no = 0
+    yes = 0.0
+    no = 0.0
     for vote in current_vote['votes'].values():
         if vote.weight > 0:
             yes += vote.weight
         else:
             no -= vote.weight
-    return Scores(round(yes - no, 2), round(yes, 2), round(no, 2))
+    return Scores(fancy_round(yes - no), fancy_round(yes), fancy_round(no))
+
+
+def fancy_round(val: Union[float, int]) -> Union[float, int]:
+    if isinstance(val, float) and val.is_integer():
+        return int(val)
+    return round(val, 2)
 
 
 async def init(bot: TelegramClient) -> None:
     @bot.on(events.NewMessage(pattern='#addsticker(?: (.+))?', chats=ALLOWED_CHATS))
     async def start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
-        global current_vote
-
         if not event.is_reply:
             return
+        elif current_vote:
+            await event.reply('There\'s already an ongoing sticker poll.')
+            return
+
+        async with current_vote_lock:
+            await start_poll_int(event)
+
+    async def start_poll_int(event: Union[events.NewMessage.Event, Message]) -> None:
+        global current_vote
+
+        if current_vote:
+            await event.reply('There\'s already an ongoing sticker poll.')
+            return
+
         emoji = event.pattern_match.group(1) or '\u2728'
         try:
             _, sender_name = WEIGHTS[event.sender_id]
         except KeyError:
             return
         orig_evt: Message = await event.get_reply_message()
-        # TODO add support for adding animated stickers to a separate pack
-        if not orig_evt.photo or (not orig_evt.sticker or orig_evt.sticker.mime_type == 'application/x-tgsticker'):
-            return
-
-        if current_vote:
-            await event.reply('There\'s already an ongoing sticker poll.')
+        # TODO add support for animated stickers
+        if not orig_evt.photo and (not orig_evt.sticker or
+                                   orig_evt.sticker.mime_type == 'application/x-tgsticker'):
             return
 
         filename = os.path.join(os.path.dirname(__file__), f'stickermanager.{int(time())}.dat')
@@ -179,14 +201,15 @@ async def init(bot: TelegramClient) -> None:
             'chat': event.chat_id,
             'sender_id': event.sender_id,
             'sender_name': sender_name,
-            'score': 0.0,
+            'score': 0,
             'emoji': emoji,
             'votes': {},
             'filepath': filename,
-            'animated': orig_evt.document and orig_evt.document.mime_type == 'application/x-tgsticker'
+            'pack_link': f'https://t.me/addstickers/{STICKER_PACK_SHORT_NAME}',
+            'animated': orig_evt.sticker and orig_evt.sticker.mime_type == 'application/x-tgsticker'
         }
         reply_evt: Message = await orig_evt.reply(
-            POLL_TEMPLATE.safe_substitute(**get_template_data()),
+            POLL_TEMPLATE.format_map(get_template_data()),
             buttons=[Button.inline(UP, b'+'), Button.inline(DOWN, b'-')],
             parse_mode='html')
         current_vote['poll'] = reply_evt.id
@@ -194,6 +217,14 @@ async def init(bot: TelegramClient) -> None:
 
     @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (b'+', b'-')))
     async def vote_poll(event: events.CallbackQuery.Event) -> None:
+        if not current_vote or current_vote['poll'] != event.message_id:
+            await event.answer('That poll is closed.')
+            return
+
+        async with current_vote_lock:
+            await vote_poll_int(event)
+
+    async def vote_poll_int(event: events.CallbackQuery.Event) -> None:
         global current_vote
 
         if not current_vote or current_vote['poll'] != event.message_id:
@@ -220,19 +251,25 @@ async def init(bot: TelegramClient) -> None:
         scores = calculate_scores()
         current_vote['score'] = scores.sum
 
-        if scores.sum >= VOTES_REQUIRED:
-            current_vote['result'] = RESULT_ADDED
+        if abs(scores.sum) >= VOTES_REQUIRED:
+            if scores.sum > 0:
+                current_vote['result'] = RESULT_ADDED.format_map(get_template_data())
+                res = "accepted"
+            else:
+                current_vote['result'] = RESULT_REJECTED.format_map(get_template_data())
+                res = "rejected"
             await bot.edit_message(current_vote['chat'], current_vote['poll'],
-                                   POLL_FINISHED_TEMPLATE.safe_substitute(**get_template_data()),
+                                   POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
                                    parse_mode='html')
-            pack, document = await add_sticker_to_pack(bot)
+            await event.answer(f'Successfully voted {fancy_round(weight)},'
+                               f' which made the sticker be {res} \U0001f389')
+            if res == "accepted":
+                pack, document = await add_sticker_to_pack(bot)
+                await event.respond(file=document, reply_to=current_vote['poll'])
             current_vote = None
-            await event.answer(f'Successfully voted {weight},'
-                               ' which made the sticker be accepted \U0001f389')
-            await event.respond(file=document)
         else:
             await bot.edit_message(current_vote['chat'], current_vote['poll'],
-                                   POLL_TEMPLATE.safe_substitute(**get_template_data()),
+                                   POLL_TEMPLATE.format_map(get_template_data()),
                                    buttons=[Button.inline(f'{UP} ({scores.yes})', b'+'),
                                             Button.inline(f'{DOWN} ({scores.no})', b'-')],
                                    parse_mode='html')
