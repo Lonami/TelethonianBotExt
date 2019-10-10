@@ -50,9 +50,9 @@ DOWN_DAT = b'addsticker/-'
 POLL_TIMEOUT = ADD_COOLDOWN = 24 * 60 * 60
 
 BASE_DIR = Path(__file__).resolve().parent
-CONFIG_FILE = BASE_DIR.joinpath("stickermanager.tsv")
-CACHE_FILE = BASE_DIR.joinpath("stickermanager.json")
-DATA_FILE_FORMAT: str = "stickermanager.{ts}.dat"
+CONFIG_FILE = BASE_DIR / 'stickermanager.tsv'
+CACHE_FILE = BASE_DIR / 'stickermanager.json'
+DATA_FILE_FORMAT: str = 'stickermanager.{ts}.dat'
 
 VoteData = NamedTuple('VoteData', weight=int, displayname=str)
 Number = Union[int, float]
@@ -94,8 +94,8 @@ def load_cache() -> None:
         cv_data = data['current_vote']
         if cv_data:
             current_vote = cv_data
-            current_vote["votes"] = {int(uid): VoteData(*data)
-                                     for uid, data in cv_data["votes"].items()}
+            current_vote['votes'] = {int(uid): VoteData(*data)
+                                     for uid, data in cv_data['votes'].items()}
         last_accepted = data['last_accepted'] or 0
 
 
@@ -278,7 +278,7 @@ async def init(bot: TelegramClient) -> None:
 
         unpin_task = asyncio.ensure_future(bot.pin_message(current_vote['chat'], message=None),
                                            loop=bot.loop)
-        accepted = current_vote["score"] >= VOTES_REQUIRED
+        accepted = current_vote['score'] >= VOTES_REQUIRED
         result_tpl = RESULT_ADDED if accepted else RESULT_REJECTED
         current_vote['result'] = result_tpl.format_map(get_template_data())
         await bot.edit_message(current_vote['chat'], current_vote['poll'],
@@ -332,7 +332,7 @@ async def init(bot: TelegramClient) -> None:
         if abs(scores.sum) >= VOTES_REQUIRED:
             current_vote_status.set()
             accepted = await _locked_finish_poll()
-            res = "accepted" if accepted else "rejected"
+            res = 'accepted' if accepted else 'rejected'
             await event.answer(f'Successfully voted {fancy_round(weight)},'
                                f' which made the sticker be {res} \U0001f389')
         else:
