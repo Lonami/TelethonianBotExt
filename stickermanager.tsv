@@ -14,7 +14,7 @@ sticker owner	-	10885151
 votes required	6	-
 
 # The vote weight for users who aren't listed.
-default weight	0.1	-
+default weight	0.5	-
 
 # Comma-separated list of chat IDs where the bot is enabled.
 allowed chats	-	-1001200633650
@@ -22,14 +22,14 @@ allowed chats	-	-1001200633650
 # Users
 # Format:
 # user id	weight	name
-10885151 	20	lonami
-413897993	1	Zac
-84359547 	1	tulir
+10885151 	3	lonami
+413897993	3	Zac
+84359547 	2	tulir
 568292500	1	ändrew
 416195206	1	Alex
-400319287	1	painor
+400319287	2	painor
 52302719 	1	Somebody
-234480941	1	twit
+234480941	2	twit
 172811422	1	Simon
 170256543	1	drunktimelord
 544603901	1	Joel B
