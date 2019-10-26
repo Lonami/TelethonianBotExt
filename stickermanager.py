@@ -17,7 +17,8 @@ from telethon.tl.types import (
 from telethon.tl.types.messages import StickerSet
 from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerToSetRequest
 from telethon.tl.functions.messages import UploadMediaRequest, GetStickerSetRequest
-from telethon.errors import StickersetInvalidError
+from telethon.tl.functions.channels import GetParticipantRequest
+from telethon.errors import StickersetInvalidError, UserNotParticipantError
 from telethon import events, utils, TelegramClient
 
 POLL_TEMPLATE = (
@@ -201,7 +202,7 @@ def fancy_round(val: Number) -> Number:
 
 
 async def init(bot: TelegramClient) -> None:
-    @bot.on(events.NewMessage(pattern='#addsticker(?: (.+))?', chats=ALLOWED_CHATS))
+    @bot.on(events.NewMessage(pattern='#addsticker (.+)', chats=ALLOWED_CHATS))
     async def start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
         if not event.is_reply:
             return
@@ -224,7 +225,7 @@ async def init(bot: TelegramClient) -> None:
                               'previous sticker was added.')
             return
 
-        emoji = event.pattern_match.group(1) or '\u2728'
+        emoji = event.pattern_match.group(1)
         try:
             _, sender_name = WEIGHTS[event.sender_id]
         except KeyError:
@@ -306,6 +307,13 @@ async def init(bot: TelegramClient) -> None:
 
         if not current_vote or current_vote['poll'] != event.message_id:
             await event.answer('That poll is closed.')
+            return
+
+        try:
+            await bot(GetParticipantRequest(channel=current_vote["chat"],
+                                            user_id=event.input_sender))
+        except UserNotParticipantError:
+            await event.answer('You\'re not participating in the chat.')
             return
 
         weight, displayname = WEIGHTS.get(event.sender_id, (DEFAULT_WEIGHT, None))
