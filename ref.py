@@ -13,8 +13,18 @@ DOCS_MESSAGE = (
     'modules/custom.html#telethon.tl.custom.message.Message.'
 )
 
+COMMON_WORDS = re.compile(
+    r'\b('
+    r'good|new|first|last|long|great|little|own|other|old|right|big|high|different|small|large|next|early|young|important|few|public|bad|same|able'
+    r'|to|of|in|for|on|with|at|by|from|up|about|into|over|after'
+    r'|the|and|a|that|I|it|not|he|as|you|this|but|his|they|her|she|or|an|will|my|one|all|would|there|their'
+    r')\b', re.IGNORECASE
+)
 
 def search_attr(cls, query, threshold=0.6):
+    query = COMMON_WORDS.sub('', query)
+    query = re.sub(' {2,}', ' ', query).strip()
+
     seq = difflib.SequenceMatcher(b=query, autojunk=False)
     scores = []
     for n in dir(cls):
