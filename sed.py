@@ -1,8 +1,8 @@
+import multiprocessing
 import re
 from collections import defaultdict, deque
 
 from telethon import events
-
 
 last_msgs = defaultdict(lambda: deque(maxlen=10))
 last_replies = defaultdict(lambda: deque(maxlen=10))
@@ -15,6 +15,22 @@ class UnknownFlag(ValueError):
     def __init__(self, flag):
         super().__init__(f'unknown flag: {flag}')
         self.flag = flag
+
+
+def timeout(func, n, *args):
+    def proc(pf, po, *pa):
+        po.send(pf(*pa))
+
+    inp, out = multiprocessing.Pipe()
+    p = multiprocessing.Process(target=proc, args=(func, out, *args))
+    p.start()
+    p.join(n)
+    if p.is_alive():
+        p.terminate()
+        p.join()
+        raise TimeoutError('Process {} timed out after {}'.format(func, n))
+    else:
+        return inp.recv()
 
 
 def build_substitute(pattern, repl, flag_str):
@@ -58,7 +74,12 @@ async def init(bot):
             return
 
         for message in messages:
-            new = substitute(message.raw_text)
+            try:
+                new = timeout(substitute, 0.2, message.raw_text)
+            except TimeoutError:
+                await message.reply('are you… trying to DoS me?')
+                break
+
             if new is None:
                 continue
 
