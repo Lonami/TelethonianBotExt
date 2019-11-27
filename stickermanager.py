@@ -19,7 +19,7 @@ from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerTo
 from telethon.tl.functions.messages import UploadMediaRequest, GetStickerSetRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import StickersetInvalidError, UserNotParticipantError
-from telethon import events, utils, TelegramClient
+from telethon import events, utils, TelegramClient, errors
 
 POLL_TEMPLATE = (
     '<a href="tg://user?id={sender_id}">{sender_name}</a> has suggested this '
@@ -36,6 +36,10 @@ POLL_FINISHED_TEMPLATE = (
     'sticker be added to the group\'s sticker pack with the emoji {emoji}.\n\n'
     'For: {yes}\n'
     'Against: {no}'
+)
+
+POLL_DELETED_ANGER = (
+    'Wait… who the fu*ck deleted my sticker poll? 3:<'
 )
 
 VOTE_TEMPLATE = '<a href="tg://user?id={uid}">{displayname}</a> ({weight})'
@@ -207,8 +211,14 @@ async def init(bot: TelegramClient) -> None:
         if not event.is_reply:
             return
         elif current_vote:
-            await event.reply('There\'s already an ongoing sticker poll.')
-            return
+            poll = await bot.get_messages(current_vote['chat'], ids=current_vote['poll'])
+            if poll is not None:
+                await event.reply('There\'s already an ongoing sticker poll.')
+                return
+            else:
+                # Will attempt to edit the poll and fail with anger so there's
+                # no need to send the anger message here.
+                await _locked_finish_poll()
 
         async with current_vote_lock:
             await _locked_start_poll(event)
@@ -282,15 +292,25 @@ async def init(bot: TelegramClient) -> None:
         accepted = current_vote['score'] >= VOTES_REQUIRED
         result_tpl = RESULT_ADDED if accepted else RESULT_REJECTED
         current_vote['result'] = result_tpl.format_map(get_template_data())
-        await bot.edit_message(current_vote['chat'], current_vote['poll'],
-                               POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
-                               parse_mode='html')
+
+        try:
+            await bot.edit_message(current_vote['chat'], current_vote['poll'],
+                                   POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
+                                   parse_mode='html')
+        except errors.MessageIdInvalidError:
+            await bot.send_message(current_vote['chat'], POLL_DELETED_ANGER)
+
         if accepted:
             pack, document = await add_sticker_to_pack(bot)
             await bot.send_file(current_vote['chat'], file=document, reply_to=current_vote['poll'])
             last_accepted = int(time())
         current_vote = None
-        await unpin_task
+
+        try:
+            await unpin_task
+        except errors.ChatNotModifiedError:
+            pass  # either poll was deleted or pin was removed anyhow else
+
         return accepted
 
     @bot.on(events.CallbackQuery(chats=ALLOWED_CHATS, data=lambda data: data in (UP_DAT, DOWN_DAT)))
