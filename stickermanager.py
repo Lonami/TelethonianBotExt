@@ -91,17 +91,20 @@ with open(CONFIG_FILE) as f:
 
 def load_cache() -> None:
     global sticker_pack, current_vote, last_accepted
-    with open(CACHE_FILE) as file:
-        data = json.load(file)
-        sp_data = data['sticker_pack']
-        if sp_data:
-            sticker_pack = InputStickerSetID(id=sp_data['id'], access_hash=sp_data['access_hash'])
-        cv_data = data['current_vote']
-        if cv_data:
-            current_vote = cv_data
-            current_vote['votes'] = {int(uid): VoteData(*data)
-                                     for uid, data in cv_data['votes'].items()}
-        last_accepted = data['last_accepted'] or 0
+    try:
+        with open(CACHE_FILE) as file:
+            data = json.load(file)
+            sp_data = data['sticker_pack']
+            if sp_data:
+                sticker_pack = InputStickerSetID(id=sp_data['id'], access_hash=sp_data['access_hash'])
+            cv_data = data['current_vote']
+            if cv_data:
+                current_vote = cv_data
+                current_vote['votes'] = {int(uid): VoteData(*data)
+                                         for uid, data in cv_data['votes'].items()}
+            last_accepted = data['last_accepted'] or 0
+    except OSError:
+        pass
 
 
 def save_cache() -> None:
