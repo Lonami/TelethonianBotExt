@@ -19,7 +19,10 @@ class UnknownFlag(ValueError):
 
 def timeout(func, n, *args):
     def proc(pf, po, *pa):
-        po.send(pf(*pa))
+        try:
+            po.send((pf(*pa), None))
+        except BaseException as e:
+            po.send((None, e))
 
     inp, out = multiprocessing.Pipe()
     p = multiprocessing.Process(target=proc, args=(func, out, *args))
@@ -29,8 +32,14 @@ def timeout(func, n, *args):
         p.terminate()
         p.join()
         raise TimeoutError('Process {} timed out after {}'.format(func, n))
+    elif inp.poll(n):
+        res, err = inp.recv()
+        if err:
+            raise err
+        else:
+            return res
     else:
-        return inp.recv()
+        raise ChildProcessError('Process exited without sending data')
 
 
 def build_substitute(pattern, repl, flag_str):
@@ -79,6 +88,12 @@ async def init(bot):
             except TimeoutError:
                 await message.reply('are you… trying to DoS me?')
                 break
+            except Exception as e:
+                string = str(e).strip()
+                if string:
+                    await message.reply('you caused a {}, dummy'.format(type(e).__name__))
+                else:
+                    await message.reply('you caused "{}", dummy'.format(string))
 
             if new is None:
                 continue
