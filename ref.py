@@ -41,6 +41,8 @@ def search_attr(cls, query, threshold=0.6):
 
 def attr_fullname(cls, n):
     m = getattr(cls, n)
+    if isinstance(m, property):
+        m = m.fget
     cls = sys.modules.get(m.__module__)
     for name in m.__qualname__.split('.')[:-1]:
         cls = getattr(cls, name)
