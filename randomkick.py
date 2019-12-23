@@ -105,7 +105,7 @@ async def init(bot):
         last_talked[chosen.id] = time.time()
         await event.edit(
             f'<a href="tg://user?id={chosen.id}">Congrats '
-            f'{chosen.name} you made it!</a>', parse_mode='html')
+            f'{chosen.name} you made it!</a>', buttons=None, parse_mode='html')
 
     # TODO This task is not properly terminated on disconnect
     bot.loop.create_task(kick_users())
