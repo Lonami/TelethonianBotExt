@@ -60,19 +60,14 @@ class FeedChecker:
             raise ConnectionError('Connection closed')
 
         # Ensure it's OK
-        if headers.startswith(b'HTTP/1.1 200 OK'):
-            pass  # StackOverflow puts OK in the first line
-        else:
-            # GitHub puts OK in 'Status:'
-            try:
-                index = headers.index(b'Status:') + 8
-                status = headers[index:headers.index(b'\r', index)]
-            except ValueError:
-                logging.warning('Checking %s feed failed: %s', self._host, headers.decode())
-                raise
+        try:
+            status = int(headers[9:12])  # Skip 'HTTP/1.1 '
+        except ValueError:
+            logging.warning('Checking %s feed failed: %s', self._host, headers.decode())
+            raise ValueError('Valid status code not found')
 
-            if headers[index:index + 6] != b'200 OK':
-                raise ValueError('Bad status code: {}'.format(status))
+        if status != 200:
+            raise ValueError('Bad status code: {}'.format(status))
 
         # StackOverflow has 'Content-Length:'
         index = headers.find(b'Content-Length:')
