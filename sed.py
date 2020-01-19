@@ -94,6 +94,7 @@ async def init(bot):
                     await message.reply('you caused a {}, dummy'.format(type(e).__name__))
                 else:
                     await message.reply('you caused "{}", dummy'.format(string))
+                break
 
             if new is None:
                 continue
