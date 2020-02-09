@@ -23,7 +23,7 @@ async def init(bot):
             await bot.edit_admin(
                 await event.get_input_chat(),
                 await event.get_input_user(),
-                change_info=False,
+                change_info=True,
                 # post_messages=True,
                 # edit_messages=True,
                 delete_messages=True,
