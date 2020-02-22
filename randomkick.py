@@ -87,6 +87,9 @@ async def init(bot):
                 await asyncio.sleep(delay - took)
 
     async def kick_user(delay):
+        with open(TARGET_FILE, 'w') as fd:
+            fd.write('{}\n{}\n'.format(chosen.id, int(time.time() + delay)))
+
         event = await bot.send_message(
             GROUP,
             '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
