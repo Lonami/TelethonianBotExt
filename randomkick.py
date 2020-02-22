@@ -31,7 +31,7 @@ def pick_target_file(users):
         os.unlink(TARGET_FILE)
         user = next((u for u in users if u.id == target_id), None)
         if user is not None:
-            return user, time.time() - due
+            return user, due - time.time()
 
     except OSError:
         pass
