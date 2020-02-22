@@ -30,8 +30,7 @@ def pick_target_file(users):
 
         os.unlink(TARGET_FILE)
         user = next((u for u in users if u.id == target_id), None)
-        if user is not None:
-            return user, due - time.time()
+        return user, due - time.time()
 
     except OSError:
         pass
@@ -72,11 +71,17 @@ async def init(bot):
             for x in left:
                 del last_talked[x]
 
-            chosen, delay = pick_target_file(users) or pick_random(users)
+            chosen, delay = pick_target_file(users)
+            if chosen is None:
+                warn = True
+                chosen, delay = pick_random(users)
+            else:
+                warn = False
+
             chosen.name = html.escape(utils.get_display_name(chosen))
             start = time.time()
             try:
-                await kick_user(delay)
+                await kick_user(delay, warn=warn)
             except Exception:
                 logging.exception('exception on kick user')
 
@@ -86,16 +91,17 @@ async def init(bot):
                 # It's OK if it's negative, will sleep(0)
                 await asyncio.sleep(delay - took)
 
-    async def kick_user(delay):
+    async def kick_user(delay, *, warn):
         with open(TARGET_FILE, 'w') as fd:
             fd.write('{}\n{}\n'.format(chosen.id, int(time.time() + delay)))
 
-        event = await bot.send_message(
-            GROUP,
-            '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
-            ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
-            buttons=Button.inline('click me to stay', b'alive'), parse_mode='html'
-        )
+        if warn:
+            event = await bot.send_message(
+                GROUP,
+                '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
+                ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
+                buttons=Button.inline('click me to stay', b'alive'), parse_mode='html'
+            )
 
         if chosen.id == self_id:
             await asyncio.sleep(random.randint(10, 20))
