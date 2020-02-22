@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import html
 import logging
+import os
 import random
 import time
 
@@ -15,10 +16,40 @@ logging.basicConfig(level=logging.INFO)
 
 GROUP = 'telethonofftopic'
 DELAY = 24 * 60 * 60
+TARGET_FILE = os.path.join(os.path.dirname(__file__), 'randomkick.target')
 
 clicked = asyncio.Event()
 chosen = None
 last_talked = {}
+
+
+def pick_target_file(users):
+    try:
+        with open(TARGET_FILE) as fd:
+            target_id, due = map(int, fd)
+
+        os.unlink(TARGET_FILE)
+        user = next((u for u in users if u.id == target_id), None)
+        if user is not None:
+            return user, time.time() - due
+
+    except OSError:
+        pass
+    except Exception:
+        logging.exception('exception loading previous to-kick')
+
+
+def pick_random(users):
+    lo = min(last_talked.values(), default=0)
+    hi = time.time()
+    delta = hi - lo
+    if delta <= 0.0:
+        user = random.choice(users)
+    else:
+        weights = (1 - ((last_talked.get(x.id, lo) - lo) / delta) for x in users)
+        user = random.choices(users, weights)[0]
+
+    return user, DELAY
 
 
 async def init(bot):
@@ -41,28 +72,21 @@ async def init(bot):
             for x in left:
                 del last_talked[x]
 
-            lo = min(last_talked.values(), default=0)
-            hi = time.time()
-            delta = hi - lo
-            if delta <= 0.0:
-                chosen = random.choice(users)
-            else:
-                weights = (1 - ((last_talked.get(x.id, lo) - lo) / delta) for x in users)
-                chosen = random.choices(users, weights)[0]
-
+            chosen, delay = pick_target_file(users) or pick_random(users)
             chosen.name = html.escape(utils.get_display_name(chosen))
             start = time.time()
             try:
-                await kick_user()
+                await kick_user(delay)
             except Exception:
                 logging.exception('exception on kick user')
 
             took = time.time() - start
             wait_after_clicked = 8 * 60 * 60 - took
             if wait_after_clicked > 0:
-                await asyncio.sleep(DELAY - took)
+                # It's OK if it's negative, will sleep(0)
+                await asyncio.sleep(delay - took)
 
-    async def kick_user():
+    async def kick_user(delay):
         event = await bot.send_message(
             GROUP,
             '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
@@ -78,7 +102,7 @@ async def init(bot):
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
         try:
-            await asyncio.wait_for(clicked.wait(), DELAY)
+            await asyncio.wait_for(clicked.wait(), delay)
         except asyncio.TimeoutError:
             await bot.send_message(
                 GROUP,
@@ -102,6 +126,11 @@ async def init(bot):
     async def edit_save(event):
         # Edits the kick "event" or message and updates the clicked/last talked time
         clicked.set()
+        try:
+            os.unlink(TARGET_FILE)
+        except OSError:
+            pass
+
         last_talked[chosen.id] = time.time()
         await event.edit(
             f'<a href="tg://user?id={chosen.id}">Congrats '
