@@ -122,7 +122,7 @@ async def init(bot):
 
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
-        if event.data != b'alive':
+        if event.data != b'alive' or not chosen:
             return
 
         if event.sender_id != chosen.id:
