@@ -14,7 +14,9 @@ async def init(bot):
         m = await event.respond('Checking for plugin updates…')
 
         if 'force' in event.raw_text:
-            subprocess.run(['git', '-C', os.path.dirname(__file__), 'reset --hard HEAD'])
+            await m.edit('Running git reset…')
+            result = subprocess.run(['git', '-C', os.path.dirname(__file__), 'reset --hard HEAD'])
+            await m.edit(f'git reset returned: {result.returncode}')
 
         result = subprocess.run(
             ['git', '-C', os.path.dirname(__file__), 'pull'],
