@@ -8,15 +8,6 @@ MAGIC_FILE = os.path.join(os.path.dirname(__file__), 'self-update.lock')
 
 
 async def init(bot):
-    try:
-        with open(MAGIC_FILE) as fd:
-            chat_id, msg_id = map(int, fd)
-            await bot.edit_message(chat_id, msg_id, 'Plugins updated.')
-
-        os.unlink(MAGIC_FILE)
-    except OSError:
-        pass
-
     @bot.on(events.NewMessage(pattern=r'#pull(\s+force)?', from_users=10885151))
     async def handler(event):
         await event.delete()
@@ -52,3 +43,12 @@ async def init(bot):
                 .format(html.escape(result.stderr.decode('utf-8'))),
                 parse_mode='html'
             )
+
+    try:
+        with open(MAGIC_FILE) as fd:
+            chat_id, msg_id = map(int, fd)
+            await bot.edit_message(chat_id, msg_id, 'Plugins updated.')
+
+        os.unlink(MAGIC_FILE)
+    except OSError:
+        pass
