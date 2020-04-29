@@ -37,7 +37,7 @@ except OSError:
 
 
 async def init(bot):
-    @bot.on(events.NewMessage('#warn', from_users=set(ADMINS)))
+    @bot.on(events.NewMessage(pattern='#warn', from_users=set(ADMINS)))
     async def handler(event):
         await event.delete()
         if not event.is_reply:
