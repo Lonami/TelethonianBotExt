@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import os
 import warnings
@@ -16,11 +17,14 @@ def init(bot):
     ]))
 
 
+async def _init_plugin(bot, plugin):
+    p_init = getattr(plugin, 'init', None)
+    if callable(p_init):
+        try:
+            await p_init(bot)
+        except Exception as e:
+            warnings.warn(f'Failed to load {plugin.__name__}: {type(e)} ({e})')
+
+
 async def start_plugins(bot, plugins):
-    for plugin in plugins:
-        p_init = getattr(plugin, 'init', None)
-        if callable(p_init):
-            try:
-                await p_init(bot)
-            except Exception as e:
-                warnings.warn(f'Failed to load {plugin.__name__}: {type(e)} ({e})')
+    await asyncio.gather(*(_init_plugin(bot, plugin) for plugin in plugins))
