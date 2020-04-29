@@ -53,7 +53,9 @@ async def init(bot):
         stage = warned_people[reply.sender_id]
         await reply.reply(WARN_MESSAGES[stage].format(name=name), parse_mode='html')
         stage += 1
-        if stage == len(WARN_MESSAGES):
+        if stage < len(WARN_MESSAGES):
+            warned_people[reply.sender_id] = stage
+        else:
             await bot.edit_permissions(
                 event.input_chat,
                 reply.input_sender,
@@ -61,8 +63,6 @@ async def init(bot):
             )
             del warned_people[reply.sender_id]
             await event.respond(FAREWELL_MESSAGE)
-        else:
-            warned_people[reply.sender_id] = stage
 
         with open(WARNED_FILE, 'w', encoding='utf-8') as fd:
             for kv in warned_people.items():
