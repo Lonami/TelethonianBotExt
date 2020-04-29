@@ -1,4 +1,5 @@
 import html
+import logging
 import os
 import subprocess
 
@@ -24,20 +25,7 @@ async def init(bot):
             stderr=subprocess.PIPE
         )
 
-        if result.returncode == 0:
-            if result.stdout == b'Already up to date.\n':
-                await m.edit('Nothing to update.')
-            else:
-                try:
-                    with open(MAGIC_FILE, 'w') as fd:
-                        fd.write('{}\n{}\n'.format(m.chat_id, m.id))
-
-                    await m.edit('Plugins updated. Restarting…')
-                except OSError:
-                    await m.edit('Plugins updated. Will not notify after restart. Restarting…')
-
-                await bot.disconnect()
-        else:
+        if result.returncode != 0:
             await m.edit(
                 'Cannot update:\n'
                 '<pre>{}</pre>\n\n'
@@ -45,6 +33,26 @@ async def init(bot):
                 .format(html.escape(result.stderr.decode('utf-8'))),
                 parse_mode='html'
             )
+            return
+
+        if result.stdout == b'Already up to date.\n':
+            await m.edit('Nothing to update.')
+            return
+
+        try:
+            with open(MAGIC_FILE, 'w') as fd:
+                fd.write('{}\n{}\n'.format(m.chat_id, m.id))
+
+            await m.edit('Plugins updated. Restarting…')
+        except OSError:
+            await m.edit('Plugins updated. Will not notify after restart. Restarting…')
+
+        logging.warning('Disconnecting bot to restart plugins')
+        try:
+            await bot.disconnect()
+            logging.warning('Restarting via disconnect success')
+        except Exception:
+            logging.exception('Error on disconnect, this is a bug')
 
     try:
         with open(MAGIC_FILE) as fd:
