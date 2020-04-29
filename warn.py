@@ -10,9 +10,7 @@ WARN_MESSAGES = [
     "Sorry {name}, but I've had enough."
 ]
 
-FAREWELL_MESSAGE = [
-    'Farewell!'
-]
+FAREWELL_MESSAGE = 'Farewell!'
 
 WARNED_FILE = os.path.join(os.path.dirname(__file__), 'warned-people.txt')
 
