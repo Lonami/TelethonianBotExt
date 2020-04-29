@@ -37,6 +37,8 @@ def pick_target_file(users):
     except Exception:
         logging.exception('exception loading previous to-kick')
 
+    return None, None
+
 
 def pick_random(users):
     lo = min(last_talked.values(), default=0)
