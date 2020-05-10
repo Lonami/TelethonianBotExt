@@ -66,4 +66,4 @@ async def init(bot):
 
         with open(WARNED_FILE, 'w', encoding='utf-8') as fd:
             for kv in warned_people.items():
-                fd.write('{} {}'.format(*kv))
+                fd.write('{} {}\n'.format(*kv))
