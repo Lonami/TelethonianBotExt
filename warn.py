@@ -45,6 +45,8 @@ async def init(bot):
         if reply.sender_id in ADMINS:
             return
 
+        await reply.delete()
+
         name = '<a href="tg://user?id={}">{}</a>'.format(
             reply.sender_id,
             html.escape(reply.sender.first_name)
@@ -57,12 +59,12 @@ async def init(bot):
             warned_people[reply.sender_id] = stage
         else:
             await bot.edit_permissions(
-                event.input_chat,
+                reply.input_chat,
                 reply.input_sender,
                 view_messages=False
             )
             del warned_people[reply.sender_id]
-            await event.respond(FAREWELL_MESSAGE)
+            await reply.respond(FAREWELL_MESSAGE)
 
         with open(WARNED_FILE, 'w', encoding='utf-8') as fd:
             for kv in warned_people.items():
