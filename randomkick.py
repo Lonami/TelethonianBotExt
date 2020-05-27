@@ -86,6 +86,9 @@ async def init(bot):
                 await kick_user(delay, warn=warn)
             except Exception:
                 logging.exception('exception on kick user')
+            finally:
+                # This may or may not fix a bug where we spam "kicked inactive"
+                chosen = None
 
             took = time.time() - start
             wait_after_clicked = 8 * 60 * 60 - took
