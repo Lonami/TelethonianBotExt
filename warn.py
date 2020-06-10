@@ -5,9 +5,9 @@ from collections import defaultdict
 from telethon import events
 
 WARN_MESSAGES = [
-    "Hey {name}, don't do that again or I will ban you. You have been warned.",
-    "{name}, this is the second warning. Stop doing that or I will ban you.",
-    "Sorry {name}, but I've had enough."
+    "Hey {name}, don't do that again{what} or I will ban you. You have been warned.",
+    "{name}, this is the second warning. Stop doing that{what} or I will ban you.",
+    "Sorry {name}, this is the last time you do that{what}; I've had enough."
 ]
 
 FAREWELL_MESSAGE = 'Farewell!'
@@ -52,8 +52,11 @@ async def init(bot):
             html.escape(reply.sender.first_name)
         )
 
+        what = event.raw_text.split(maxsplit=1)
+        what = None if len(what) < 2 else f' ({what[1]})'
+
         stage = warned_people[reply.sender_id]
-        await reply.reply(WARN_MESSAGES[stage].format(name=name), parse_mode='html')
+        await reply.reply(WARN_MESSAGES[stage].format(name=name, what=what), parse_mode='html')
         stage += 1
         if stage < len(WARN_MESSAGES):
             warned_people[reply.sender_id] = stage
