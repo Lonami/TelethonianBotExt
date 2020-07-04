@@ -36,28 +36,49 @@ class XML:
         ).strip()
 
 
+def _header(headers, name):
+    index = headers.find(name)
+    if index != -1:
+        index += len(name) + 1
+        return headers[index:headers.index(b'\r', index)].decode()
+
+
 class FeedChecker:
     def __init__(self, host, path):
         self._host = host
-        self._request = (
-            f'GET {path} HTTP/1.1\r\n'
-            f'Host: {host}\r\n'
-            f'\r\n'
-        ).encode()
+        self._path = path
+        self._etag = None
+        self._last_modified = None
         self._seen_ids = set()
+
+    def _request(self):
+        req = [f'GET {self._path} HTTP/1.1',
+               f'Host: {self._host}',
+               f'Connection: close',]
+        if self._etag:
+            req.append(f'If-None-Match: {self._etag}')
+        if self._last_modified:
+            req.append(f'If-Modified-Since: {self._last_modified}')
+
+        req.extend(('', ''))
+        return '\r\n'.join(req).encode()
 
     async def _fetch(self):
         # We could use `aiohttp` but this is more fun
         rd, wr = await asyncio.open_connection(self._host, 443, ssl=True)
 
         # Send HTTP request
-        wr.write(self._request)
+        req = self._request()
+        logging.debug('Sending to %s: %s', self._host, req)
+        wr.write(req)
         await wr.drain()
 
         # Get response headers
         headers = await rd.readuntil(b'\r\n\r\n')
         if headers[-4:] != b'\r\n\r\n':
             raise ConnectionError('Connection closed')
+
+        logging.debug('Answer from %s: %s', self._host, headers)
 
         # Ensure it's OK
         try:
@@ -66,14 +87,18 @@ class FeedChecker:
             logging.warning('Checking %s feed failed: %s', self._host, headers.decode())
             raise ValueError('Valid status code not found')
 
+        if status in (304, 412):
+            logging.info('Feed %s has not changed: %d', self._host, status)
+            return
+
         if status != 200:
             raise ValueError('Bad status code: {}'.format(status))
 
         # StackOverflow has 'Content-Length:'
-        index = headers.find(b'Content-Length:')
-        if index != -1:
-            index += 16
-            length = int(headers[index:headers.index(b'\r', index)])
+        content_len = _header(headers, b'Content-Length:')
+        if content_len:
+            length = int(content_len)
+            logging.debug('Reading exactly %d', length)
             result = await rd.readexactly(length)
         else:
             # GitHub uses "Transfer-Encoding: chunked", so no Content-Length
@@ -86,17 +111,28 @@ class FeedChecker:
                 result += await rd.readexactly(length)
                 await rd.readline()
 
+        logging.debug('Closing writer')
+
         # Properly close the writer
         wr.close()
         if sys.version_info >= (3, 7):
             await wr.wait_closed()
 
-        return XML.from_string(result.decode('utf-8'))
+        xml = XML.from_string(result.decode('utf-8'))
+
+        # Find ETag (GitHub) and last modified (StackOverflow) on success
+        self._etag = _header(headers, b'etag:')
+        self._last_modified = _header(headers, b'last-modified:')
+
+        return xml
 
     async def poll(self):
         feed = await self._fetch()
 
         new = []
+        if feed is None:  # not modified
+            return new
+
         for entry in feed.tags('entry'):
             entry_id = entry.tag('id').text
             if entry_id not in self._seen_ids:
@@ -190,3 +226,36 @@ async def init(bot):
 
     # TODO This task is not properly terminated on disconnect
     bot.loop.create_task(check_feed())
+
+
+async def main():
+    """
+    For testing purposes.
+    """
+    logging.basicConfig(level=logging.DEBUG)
+    github_feed = FeedChecker(
+        host='github.com',
+        path='/LonamiWebs/Telethon/commits/master.atom'
+    )
+    stackoverflow_feed = FeedChecker(
+        host='stackoverflow.com',
+        path='/feeds/tag?tagnames=telethon&sort=newest'
+    )
+
+    # Skip the ones currently in the feed, we already know them
+    logging.info('Checking GitHub')
+    await github_feed.poll()
+    logging.info('Checking StackOverflow')
+    await stackoverflow_feed.poll()
+
+    logging.info('Sleeping...')
+    await asyncio.sleep(10)
+
+    logging.info('Checking GitHub')
+    await github_feed.poll()
+    logging.info('Checking StackOverflow')
+    await stackoverflow_feed.poll()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
