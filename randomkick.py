@@ -9,7 +9,7 @@ import time
 
 from telethon import events, utils
 from telethon.tl.custom import Button
-from telethon.tl.types import ChatBannedRights
+from telethon.tl.types import ChatBannedRights, ChannelParticipantAdmin, ChannelParticipantCreator
 
 logging.basicConfig(level=logging.INFO)
 
@@ -66,8 +66,15 @@ async def init(bot):
         global chosen
         while True:
             clicked.clear()
-            users = await bot.get_participants(GROUP)
-
+            users = [
+                x
+                for x in await client.get_participants(GROUP)
+                if not (
+                    isinstance(x.participant, ChannelParticipantAdmin)
+                    or isinstance(x.participant, ChannelParticipantCreator)
+                )
+            ]
+            
             # Delete people who talked before but have left the group
             left = last_talked.keys() - {x.id for x in users}
             for x in left:
