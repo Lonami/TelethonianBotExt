@@ -28,14 +28,19 @@ def pick_target_file(users):
         with open(TARGET_FILE) as fd:
             target_id, due = map(int, fd)
 
-        os.unlink(TARGET_FILE)
         user = next((u for u in users if u.id == target_id), None)
         return user, due - time.time()
-
-    except OSError:
+    except FileNotFoundError:
         pass
     except Exception:
         logging.exception('exception loading previous to-kick')
+    finally:
+        try:
+            os.unlink(TARGET_FILE)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            logging.exception('could not remove target file')
 
     return None, None
 
