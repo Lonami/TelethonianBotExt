@@ -70,7 +70,6 @@ async def init(bot):
     async def kick_users():
         global chosen
         while True:
-            clicked.clear()
             users = await bot.get_participants(GROUP)
 
             # Delete people who talked before but have left the group
@@ -117,6 +116,7 @@ async def init(bot):
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
         try:
+            clicked.clear()
             await asyncio.wait_for(clicked.wait(), delay)
         except asyncio.TimeoutError:
             try:
