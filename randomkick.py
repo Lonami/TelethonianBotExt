@@ -69,10 +69,7 @@ async def init(bot):
             users = [
                 x
                 for x in await client.get_participants(GROUP)
-                if not (
-                    isinstance(x.participant, ChannelParticipantAdmin)
-                    or isinstance(x.participant, ChannelParticipantCreator)
-                )
+                if not isinstance(x.participant, (ChannelParticipantAdmin, ChannelParticipantCreator))
             ]
             
             # Delete people who talked before but have left the group
