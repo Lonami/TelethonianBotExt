@@ -88,6 +88,7 @@ async def init(bot):
                 logging.exception('exception on kick user')
             finally:
                 # This may or may not fix a bug where we spam "kicked inactive"
+                # UPDATE: it doesn't fix the bug
                 chosen = None
 
             took = time.time() - start
