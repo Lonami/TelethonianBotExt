@@ -134,7 +134,7 @@ async def init(bot):
                 await bot.send_message(
                     GROUP,
                     f'Guess I cannot kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
-                    f'for being inactive… Darned admin priviledges. You should talk more!',
+                    f' for being inactive… Darned admin priviledges. You should talk more!',
                     parse_mode='html')
             else:
                 await bot.send_message(
