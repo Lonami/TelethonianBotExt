@@ -18,9 +18,21 @@ GROUP = 'telethonofftopic'
 DELAY = 24 * 60 * 60
 TARGET_FILE = os.path.join(os.path.dirname(__file__), 'randomkick.target')
 
-clicked = asyncio.Event()
 chosen = None
 last_talked = {}
+
+
+class Chosen:
+    def __init__(self, user):
+        self.id = user.id
+        self.name = html.escape(utils.get_display_name(user))
+        self._clicked = asyncio.Event()
+
+    async def wait_save(self, delay):
+        await asyncio.wait_for(self._clicked.wait(), delay)
+
+    def clicked_save(self):
+        self._clicked.set()
 
 
 def pick_target_file(users):
@@ -68,7 +80,6 @@ async def init(bot):
         last_talked[e.sender_id] = time.time()
 
     async def kick_users():
-        global chosen
         while True:
             users = await bot.get_participants(GROUP)
 
@@ -77,21 +88,20 @@ async def init(bot):
             for x in left:
                 del last_talked[x]
 
-            chosen, delay = pick_target_file(users)
-            if chosen is None:
+            user, delay = pick_target_file(users)
+            if user is None:
                 warn = True
-                chosen, delay = pick_random(users)
+                user, delay = pick_random(users)
             else:
                 warn = False
 
-            chosen.name = html.escape(utils.get_display_name(chosen))
+            global chosen
             try:
+                chosen = Chosen(user)
                 await kick_user(delay, warn=warn)
             except Exception:
                 logging.exception('exception on kick user')
             finally:
-                # This may or may not fix a bug where we spam "kicked inactive"
-                # UPDATE: it doesn't fix the bug
                 chosen = None
 
             await asyncio.sleep(8 * 60 * 60)
@@ -116,8 +126,7 @@ async def init(bot):
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
         try:
-            clicked.clear()
-            await asyncio.wait_for(clicked.wait(), delay)
+            await chosen.wait_save(delay)
         except asyncio.TimeoutError:
             try:
                 await bot.kick_participant(GROUP, chosen.id)
@@ -135,7 +144,7 @@ async def init(bot):
 
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
-        if event.data != b'alive' or not chosen:
+        if not chosen or event.data != b'alive':
             return
 
         if event.sender_id != chosen.id:
@@ -147,11 +156,13 @@ async def init(bot):
 
     async def edit_save(event):
         # Edits the kick "event" or message and updates the clicked/last talked time
-        clicked.set()
+        chosen.clicked_save()
         try:
             os.unlink(TARGET_FILE)
-        except OSError:
+        except FileNotFoundError:
             pass
+        except OSError:
+            logging.exception('could not remove target file')
 
         last_talked[chosen.id] = time.time()
         await event.edit(
