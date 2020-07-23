@@ -7,7 +7,7 @@ import os
 import random
 import time
 
-from telethon import events, utils
+from telethon import events, utils, errors
 from telethon.tl.custom import Button
 from telethon.tl.types import ChatBannedRights
 
@@ -119,12 +119,19 @@ async def init(bot):
         try:
             await asyncio.wait_for(clicked.wait(), delay)
         except asyncio.TimeoutError:
-            await bot.send_message(
-                GROUP,
-                f'<a href="tg://user?id={chosen.id}">{chosen.name} '
-                f'was kicked for being inactive</a>', parse_mode='html')
-
-            await bot.kick_participant(GROUP, chosen.id)
+            try:
+                await bot.kick_participant(GROUP, chosen.id)
+            except errors.UserAdminInvalidError:
+                await bot.send_message(
+                    GROUP,
+                    f'Guess I cannot kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
+                    f'for being inactive… Darned admin priviledges. You should talk more!',
+                    parse_mode='html')
+            else:
+                await bot.send_message(
+                    GROUP,
+                    f'<a href="tg://user?id={chosen.id}">{chosen.name} '
+                    f'was kicked for being inactive</a>', parse_mode='html')
 
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
