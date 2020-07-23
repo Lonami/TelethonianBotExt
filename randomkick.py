@@ -86,7 +86,6 @@ async def init(bot):
                 warn = False
 
             chosen.name = html.escape(utils.get_display_name(chosen))
-            start = time.time()
             try:
                 await kick_user(delay, warn=warn)
             except Exception:
@@ -96,11 +95,7 @@ async def init(bot):
                 # UPDATE: it doesn't fix the bug
                 chosen = None
 
-            took = time.time() - start
-            wait_after_clicked = 8 * 60 * 60 - took
-            if wait_after_clicked > 0:
-                # It's OK if it's negative, will sleep(0)
-                await asyncio.sleep(delay - took)
+            await asyncio.sleep(8 * 60 * 60)
 
     async def kick_user(delay, *, warn):
         with open(TARGET_FILE, 'w') as fd:
