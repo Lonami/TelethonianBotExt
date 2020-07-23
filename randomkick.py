@@ -46,15 +46,25 @@ def pick_target_file(users):
         pass
     except Exception:
         logging.exception('exception loading previous to-kick')
-    finally:
+
+    return None, None
+
+
+def save_target_file(user, delay):
+    try:
+        with open(TARGET_FILE, 'w') as fd:
+            fd.write('{}\n{}\n'.format(user.id, int(time.time() + delay)))
+    except Exception:
+        logging.exception('could not save target file')
+
+
+def remove_target_file():
         try:
             os.unlink(TARGET_FILE)
         except FileNotFoundError:
             pass
         except OSError:
             logging.exception('could not remove target file')
-
-    return None, None
 
 
 def pick_random(users):
@@ -92,6 +102,7 @@ async def init(bot):
             if user is None:
                 warn = True
                 user, delay = pick_random(users)
+                save_target_file(user, delay)
             else:
                 warn = False
 
@@ -103,13 +114,11 @@ async def init(bot):
                 logging.exception('exception on kick user')
             finally:
                 chosen = None
+                remove_target_file()
 
             await asyncio.sleep(8 * 60 * 60)
 
     async def kick_user(delay, *, warn):
-        with open(TARGET_FILE, 'w') as fd:
-            fd.write('{}\n{}\n'.format(chosen.id, int(time.time() + delay)))
-
         if warn:
             event = await bot.send_message(
                 GROUP,
@@ -156,15 +165,12 @@ async def init(bot):
 
     async def edit_save(event):
         # Edits the kick "event" or message and updates the clicked/last talked time
+        #
+        # When this is clicked `kick_user` should stop waiting without timeout and
+        # finally after it's donen chosen / target file be cleared.
         chosen.clicked_save()
-        try:
-            os.unlink(TARGET_FILE)
-        except FileNotFoundError:
-            pass
-        except OSError:
-            logging.exception('could not remove target file')
-
         last_talked[chosen.id] = time.time()
+
         await event.edit(
             f'<a href="tg://user?id={chosen.id}">Congrats '
             f'{chosen.name} you made it!</a>', buttons=None, parse_mode='html')
