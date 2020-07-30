@@ -1,7 +1,16 @@
 import time
-from telethon import events
+from telethon import events, types
 from dataclasses import dataclass
 from typing import Optional
+
+
+def extract_command(message):
+    for (ent, txt) in message.get_entities_text():
+        if ent.offset != 0:
+            break
+
+        if isinstance(ent, types.MessageEntityBotCommand):
+            return txt
 
 
 async def init(bot):
@@ -66,8 +75,14 @@ async def init(bot):
 
         waiting_question.remove(event.sender_id)
 
-        if event.raw_text == '/cancel':
+        cmd = extract_command(event)
+        if cmd == '/cancel':
             await event.respond('Okay, question cancelled.')
+        elif cmd:
+            await event.respond(
+                'Please send your question, not a command. If you no longer want to send '
+                'a question, use the /cancel command.'
+            )
         else:
             message = await event.forward_to('TelethonChat')
             question_to_user[message.id] = event.sender_id
