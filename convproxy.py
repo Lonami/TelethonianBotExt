@@ -1,4 +1,5 @@
 import time
+import os
 from telethon import events, types
 from dataclasses import dataclass
 from typing import Optional
@@ -13,8 +14,18 @@ def extract_command(message):
             return txt
 
 
+# TODO figure out a way to share stuff between autoadmin.py and here
+with open(os.path.join(os.path.dirname(__file__), 'admins.txt'), encoding="utf-8") as f:
+    ADMINS = {
+        int(line.strip().split()[0]): line.strip().split()[1]
+        for line in f
+        if not line.isspace()
+    }
+
+
 async def init(bot):
     me = None
+    blocked = set()  # blocked user ids
 
     waiting_question = set()  # user ids waiting for a question
     question_to_user = {}  # question msg id to user id who asked
@@ -41,6 +52,15 @@ async def init(bot):
 
     @bot.on(events.NewMessage(pattern=r'/ask', func=lambda e: e.is_private))
     async def _(event):
+        if event.sender_id in blocked:
+            await event.respond(
+                'One of your previous "questions" was inappropriate, and you have been blocked, '
+                'meaning you cannot ask anymore. This restriction may be lifted in the future, '
+                'but until then you cannot ask again. Sorry, but please understand you should '
+                'have not misused this feature in the first place.'
+            )
+            return
+
         delta = time.time() - ask_time.get(event.sender_id, 0)
         if delta < question_delay:
             await event.respond(
@@ -95,5 +115,20 @@ async def init(bot):
     @bot.on(events.NewMessage('TelethonChat', func=lambda e: e.mentioned and e.is_reply))
     async def _(event):
         user = question_to_user.get(event.reply_to_msg_id)
-        if user:
-            await event.forward_to(user)
+        if not user:
+            return
+
+        if event.raw_text == '#block':
+            await event.delete()
+            if event.sender_id not in ADMINS:
+                return
+
+            blocked.add(user)
+            await bot.send_message(
+                user,
+                'The group administrators have found one of your "questions" inappropriate '
+                'and you have been blocked from making any more questions.'
+            )
+            return
+
+        await event.forward_to(user)
