@@ -50,7 +50,7 @@ async def init(bot):
         )
         raise events.StopPropagation
 
-    @bot.on(events.NewMessage(pattern=r'/ask', func=lambda e: e.is_private))
+    @bot.on(events.NewMessage(pattern=r'/ask', func=lambda e: e.is_private and not e.forward))
     async def _(event):
         if event.sender_id in blocked:
             await event.respond(
