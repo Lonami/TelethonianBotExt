@@ -86,6 +86,12 @@ async def init(bot):
         if event.sender_id not in waiting_question:
             return
 
+        if event.forward:
+            await event.respond(
+                'Please type the question yourself instead of forwarding a message.'
+            )
+            return
+
         if event.media and not event.web_preview:
             await event.respond(
                 'Please do not use media. If you need to share code use a paste service '
