@@ -135,6 +135,7 @@ async def init(bot):
                 'The group administrators have found one of your "questions" inappropriate '
                 'and you have been blocked from making any more questions.'
             )
+            await bot.delete_messages(event.chat_id, event.reply_to_msg_id)
             return
 
         await event.forward_to(user)
