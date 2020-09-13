@@ -2,6 +2,7 @@ import html
 import logging
 import os
 import subprocess
+import time
 
 from telethon import events
 
@@ -49,8 +50,10 @@ async def init(bot):
 
         logging.warning('Disconnecting bot to restart plugins')
         try:
+            start = time.time()
             await bot.disconnect()
-            logging.warning('Restarting via disconnect success')
+            took = time.time() - start
+            logging.warning(f'Restarting via disconnect success (took {took:.2f}s)')
         except Exception:
             logging.exception('Error on disconnect, this is a bug')
 
