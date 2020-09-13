@@ -89,7 +89,7 @@ async def init(bot):
     # "events", a hack is used instead. Find the event that triggers on "#event" and modify
     # it to not do that.
     for _handler, event in bot.list_event_handlers():
-        if isinstance(event, events.NewMessage) and event.pattern('#event'):
+        if isinstance(event, events.NewMessage) and callable(event.pattern) and event.pattern('#event'):
             event.pattern = re.compile('#(updates|events)').match
 
     @bot.on(events.NewMessage(pattern='(?i)#(client|msg|event) (.+)', forwards=False))

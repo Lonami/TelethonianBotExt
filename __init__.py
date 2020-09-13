@@ -27,7 +27,7 @@ async def _init_plugin(bot, plugin):
             start = time.time()
             await p_init(bot)
             took = time.time() - start
-            logging.warning(f'Loaded plugin {plugin.__name__} (took {took:.2f}')
+            logging.warning(f'Loaded plugin {plugin.__name__} (took {took:.2f}s)')
         except Exception:
             logging.exception(f'Failed to load plugin {plugin}')
 
