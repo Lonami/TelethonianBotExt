@@ -123,15 +123,14 @@ async def init(bot):
             search_attr(TelegramClient, ' '.join(words[-i:]), threshold=None)
             for i in range(1, 4)
         ]
-        what = max(rates, key=lambda t: t[1])
-        if what[1] < 0.75:
+        name, score = max(rates, key=lambda t: t[1])
+        if score < 0.75:
             return
 
-        name = what[0]
         if len(name) < 4:
             return  # Short words trigger very commonly (such as "on")
 
-        if name == 'pin_message' and what[1] < 0.85:
+        if name == 'pin_message' and score < 0.85:
             return  # "pin_message" triggers too often; require a higher threshold
 
         attr = attr_fullname(TelegramClient, name)
