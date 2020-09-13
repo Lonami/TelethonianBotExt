@@ -61,7 +61,7 @@ def get_docs_message(kind, query):
         cls = custom.Message
     elif kind == 'event':
         cls = events
-        func = func=lambda n: n[0].isupper()
+        func = lambda n: n[0].isupper()
 
     attr = search_attr(cls, query, func=func)
     if not attr:
