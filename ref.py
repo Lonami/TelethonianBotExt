@@ -131,6 +131,9 @@ async def init(bot):
         if len(name) < 4:
             return  # Short words trigger very commonly (such as "on")
 
+        if name == 'pin_message' and what[1] < 0.85:
+            return  # "pin_message" triggers too often; require a higher threshold
+
         attr = attr_fullname(TelegramClient, name)
         await event.reply(
             f'Documentation for [{name}]({DOCS_CLIENT}{attr})',
