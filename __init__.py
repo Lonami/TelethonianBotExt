@@ -2,6 +2,8 @@ import asyncio
 import importlib
 import os
 import warnings
+import logging
+import time
 
 
 def init(bot):
@@ -21,9 +23,13 @@ async def _init_plugin(bot, plugin):
     p_init = getattr(plugin, 'init', None)
     if callable(p_init):
         try:
+            logging.warning(f'Loading plugin {plugin.__name__}…')
+            start = time.time()
             await p_init(bot)
-        except Exception as e:
-            warnings.warn(f'Failed to load {plugin.__name__}: {type(e)} ({e})')
+            took = time.time() - start
+            logging.warning(f'Loaded plugin {plugin.__name__} (took {took:.2f}')
+        except Exception:
+            logging.exception(f'Failed to load plugin {plugin}')
 
 
 async def start_plugins(bot, plugins):
