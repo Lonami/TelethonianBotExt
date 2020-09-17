@@ -6,8 +6,11 @@ import logging
 import time
 
 
-def init(bot):
-    bot.loop.run_until_complete(start_plugins(bot, [
+async def init(bot):
+    logging.basicConfig(level=logging.WARNING)
+    logging.getLogger('asyncio').setLevel(logging.ERROR)
+
+    await start_plugins(bot, [
         # Dynamically import
         importlib.import_module(f'.', f'{__name__}.{file[:-3]}')
 
@@ -16,7 +19,7 @@ def init(bot):
 
         # If they start with a letter and are Python files
         if file[0].isalpha() and file.endswith('.py')
-    ]))
+    ])
 
 
 async def _init_plugin(bot, plugin):
