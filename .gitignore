@@ -1,3 +1,9 @@
 admins.txt
 stickermanager.json
 stickermanager.*.dat
+*.target
+__pycache__/
+
+# Private shim to quickly run a test version of this bot in-place
+bot.py
+*.session
