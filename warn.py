@@ -1,4 +1,3 @@
-import html
 import os
 from collections import defaultdict
 
@@ -34,7 +33,9 @@ except OSError:
     pass
 
 
-async def init(bot):
+async def init(bot, modules):
+    utils = modules['utils']
+
     @bot.on(events.NewMessage(pattern='#warn', from_users=set(ADMINS)))
     async def handler(event):
         await event.delete()
@@ -49,7 +50,7 @@ async def init(bot):
 
         name = '<a href="tg://user?id={}">{}</a>'.format(
             reply.sender_id,
-            html.escape(reply.sender.first_name)
+            utils.get_display(reply.sender)
         )
 
         what = event.raw_text.split(maxsplit=1)

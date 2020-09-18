@@ -1,17 +1,18 @@
 import logging
-import html
 import asyncio
 from telethon import events
 
 
-async def init(bot):
+async def init(bot, modules):
     try:
         import aiohttp
     except ImportError:
         aiohttp = None
         logging.warning('aiohttp module not available; #haste command disabled')
         return
-    
+
+    utils = modules['utils']
+
     @bot.on(events.NewMessage(pattern='(?i)#([hp]aste|dog|inu)(bin)?', forwards=False))
     async def handler(event):
         """
@@ -28,8 +29,7 @@ async def init(bot):
         sent = await event.respond(
             'Uploading paste…', reply_to=msg.reply_to_msg_id)
 
-        name = html.escape(
-            utils.get_display_name(await msg.get_sender()) or 'A user')
+        name = utils.get_display(await msg.get_sender())
 
         text = msg.raw_text
         code = ''

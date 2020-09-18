@@ -1,7 +1,6 @@
 # Adapted from https://github.com/painor/randomkickbot
 import asyncio
 import datetime
-import html
 import logging
 import os
 import random
@@ -18,6 +17,7 @@ GROUP = 'telethonofftopic'
 DELAY = 24 * 60 * 60
 TARGET_FILE = os.path.join(os.path.dirname(__file__), 'randomkick.target')
 
+utils = None
 chosen = None
 last_talked = {}
 
@@ -25,7 +25,7 @@ last_talked = {}
 class Chosen:
     def __init__(self, user):
         self.id = user.id
-        self.name = html.escape(utils.get_display_name(user))
+        self.name = utils.get_display(user)
         self._clicked = asyncio.Event()
 
     async def wait_save(self, delay):
@@ -80,8 +80,9 @@ def pick_random(users):
     return user, DELAY
 
 
-async def init(bot):
-    global last_talked
+async def init(bot, modules):
+    global last_talked, utils
+    utils = modules['utils']
 
     self_id = await bot.get_peer_id('me')
 

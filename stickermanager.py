@@ -4,7 +4,6 @@ import asyncio
 from time import time
 from io import BytesIO
 from pathlib import Path
-from html import escape as escape_html
 from typing import Union, NamedTuple, Callable, Optional, Tuple
 
 from PIL import Image
@@ -208,7 +207,9 @@ def fancy_round(val: Number) -> Number:
     return round(val, 2)
 
 
-async def init(bot: TelegramClient) -> None:
+async def init(bot: TelegramClient, modules: dict) -> None:
+    utils = modules['utils']
+
     @bot.on(events.NewMessage(pattern='#addsticker (.+)', chats=ALLOWED_CHATS))
     async def start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
         if not event.is_reply:
@@ -346,7 +347,7 @@ async def init(bot: TelegramClient) -> None:
         if event.data == b'addsticker/-':
             weight = -weight
 
-        displayname = displayname or escape_html((await event.get_sender()).first_name)
+        displayname = displayname or utils.get_display(await event.get_sender())
         try:
             existing = current_vote['votes'][event.sender_id]
             if existing.weight == weight:
