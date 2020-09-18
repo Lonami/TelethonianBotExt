@@ -56,7 +56,7 @@ async def init(bot):
         what = None if len(what) < 2 else f' ({what[1]})'
 
         stage = warned_people[reply.sender_id]
-        await reply.reply(WARN_MESSAGES[stage].format(name=name, what=what), parse_mode='html')
+        await reply.respond(WARN_MESSAGES[stage].format(name=name, what=what), parse_mode='html')
         stage += 1
         if stage < len(WARN_MESSAGES):
             warned_people[reply.sender_id] = stage
