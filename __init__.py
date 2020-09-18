@@ -26,13 +26,13 @@ async def init(bot):
     modules = {m.__name__: m for m in plugins}
 
     # All kwargs provided to get_init_args are those that plugins may access
-    to_init = (get_init_args(plugin, bot=bot, modules=modules) for plugin in plugins)
+    to_init = (get_init_coro(plugin, bot=bot, modules=modules) for plugin in plugins)
 
     # Plugins may not have a valid init so those need to be filtered out
     await asyncio.gather(*(filter(None, to_init)))
 
 
-def get_init_args(plugin, **kwargs):
+def get_init_coro(plugin, **kwargs):
     p_init = getattr(plugin, 'init', None)
     if not callable(p_init):
         return
@@ -46,7 +46,7 @@ def get_init_args(plugin, **kwargs):
             logging.error('Plugin %s has unknown init parameter %s', plugin.__name__, param.__name__)
             return
 
-    return plugin, result_kwargs
+    return _init_plugin(plugin, result_kwargs)
 
 
 async def _init_plugin(plugin, kwargs):
