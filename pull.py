@@ -17,7 +17,7 @@ async def init(bot):
 
         if 'force' in event.raw_text:
             await m.edit('Running git reset…')
-            result = subprocess.run(['git', '-C', os.path.dirname(__file__), 'reset --hard HEAD'])
+            result = subprocess.run(['git', '-C', os.path.dirname(__file__), 'reset', '--hard', 'HEAD'])
             await m.edit(f'git reset returned: {result.returncode}')
 
         result = subprocess.run(
