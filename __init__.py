@@ -40,8 +40,8 @@ def get_init_args(plugin, **kwargs):
     result_kwargs = {}
     sig = inspect.signature(p_init)
     for param in sig.parameters:
-        if param.name in kwargs:
-            result_kwargs[param.name] = kwargs[param.name]
+        if param in kwargs:
+            result_kwargs[param] = kwargs[param]
         else:
             logging.error('Plugin %s has unknown init parameter %s', plugin.__name__, param.__name__)
             return
