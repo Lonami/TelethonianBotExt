@@ -23,7 +23,7 @@ async def init(bot):
     ]
 
     # Keep a mapping of module name to module for easy access inside the plugins
-    modules = {m.__name__: m for m in plugins}
+    modules = {m.__name__.split('.')[-1]: m for m in plugins}
 
     # All kwargs provided to get_init_args are those that plugins may access
     to_init = (get_init_coro(plugin, bot=bot, modules=modules) for plugin in plugins)
