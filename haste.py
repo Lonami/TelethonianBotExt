@@ -1,6 +1,6 @@
 import logging
 import asyncio
-from telethon import events
+from telethon import events, types
 
 
 async def init(bot, modules):
