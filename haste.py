@@ -50,7 +50,7 @@ async def init(bot, modules):
             async with session.post('https://del.dog/documents',
                                     data=code.encode('utf-8')) as resp:
                 if resp.status >= 300:
-                    await sent.edit("Dogbin seems to be down… ( ^^')")
+                    await sent.edit("del.dog seems to be down… ( ^^')")
                     return
 
                 haste = (await resp.json())['key']
