@@ -47,7 +47,7 @@ async def init(bot, modules):
 
         async with aiohttp.ClientSession() as session:
             async with session.post('https://del.dog/documents',
-                                    data=code.encode('utf-8')) as resp:
+                                    json={"content": code}) as resp:
                 if resp.status >= 300:
                     await sent.edit("Dogbin seems to be down… ( ^^')")
                     return
