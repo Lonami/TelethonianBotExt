@@ -53,11 +53,18 @@ ASK = (
 )
 
 LOGGING = '''
-**Please enable logging:**
+**Please enable logging and use traceback:**
 ```import logging
-logging.basicConfig(level=logging.WARNING)```
+from traceback import format_exc
 
-If you need more information, use `logging.DEBUG` instead.
+logging.basicConfig(level=logging.WARNING)
+
+try:
+    (...)
+except:
+    print(format_exc())```
+
+Where ```(...)``` is your code. If you need more information, use `logging.DEBUG` instead.
 '''
 
 ALREADY_FIXED = (
