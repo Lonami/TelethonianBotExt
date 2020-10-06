@@ -302,6 +302,9 @@ async def init(bot: TelegramClient, modules: dict) -> None:
                                    POLL_FINISHED_TEMPLATE.format_map(get_template_data()),
                                    parse_mode='html')
         except errors.MessageIdInvalidError:
+            # The poll was deleted, so cancel the related wait_for_poll task
+            # If this isn't done, the task would eventually close the new poll too early.
+            current_vote_status.set()
             await bot.send_message(current_vote['chat'], POLL_DELETED_ANGER)
 
         if accepted:
