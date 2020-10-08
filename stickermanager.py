@@ -11,8 +11,7 @@ from PIL import Image
 from telethon.tl.custom import Message, Button
 from telethon.tl.types import (
     InputStickerSetID, InputStickerSetShortName, InputStickerSetItem,
-    InputDocument, InputMediaUploadedDocument, InputPeerSelf,
-    DocumentAttributeSticker
+    InputDocument, InputMediaUploadedDocument, InputPeerSelf
 )
 from telethon.tl.types.messages import StickerSet
 from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerToSetRequest
