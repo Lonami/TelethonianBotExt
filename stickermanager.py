@@ -11,7 +11,8 @@ from PIL import Image
 from telethon.tl.custom import Message, Button
 from telethon.tl.types import (
     InputStickerSetID, InputStickerSetShortName, InputStickerSetItem,
-    InputDocument, InputMediaUploadedDocument, InputPeerSelf
+    InputDocument, InputMediaUploadedDocument, InputPeerSelf,
+    DocumentAttributeSticker
 )
 from telethon.tl.types.messages import StickerSet
 from telethon.tl.functions.stickers import CreateStickerSetRequest, AddStickerToSetRequest
@@ -210,7 +211,7 @@ def fancy_round(val: Number) -> Number:
 async def init(bot: TelegramClient, modules: dict) -> None:
     utils = modules['utils']
 
-    @bot.on(events.NewMessage(pattern='#addsticker (.+)', chats=ALLOWED_CHATS))
+    @bot.on(events.NewMessage(pattern='#addsticker(?: (.+))?', chats=ALLOWED_CHATS))
     async def start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
         if not event.is_reply:
             return
@@ -250,6 +251,13 @@ async def init(bot: TelegramClient, modules: dict) -> None:
         # TODO add support for animated stickers
         if not orig_evt.photo and (not orig_evt.sticker or
                                    orig_evt.sticker.mime_type == 'application/x-tgsticker'):
+            return
+        if emoji is None and orig_evt.sticker:
+            for attr in orig_evt.sticker.attributes:
+                if isinstance(attr, DocumentAttributeSticker):
+                    emoji = attr.alt
+                    break
+        if emoji is None:
             return
 
         filename = Path(DATA_FILE_FORMAT.format(ts=int(time())))
