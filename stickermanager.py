@@ -252,13 +252,12 @@ async def init(bot: TelegramClient, modules: dict) -> None:
         if not orig_evt.photo and (not orig_evt.sticker or
                                    orig_evt.sticker.mime_type == 'application/x-tgsticker'):
             return
-        if emoji is None and orig_evt.sticker:
-            for attr in orig_evt.sticker.attributes:
-                if isinstance(attr, DocumentAttributeSticker):
-                    emoji = attr.alt
-                    break
         if emoji is None:
-            return
+            if orig_evt.file.emoji:
+                emoji = orig_evt.file.emoji
+            else:
+                return
+
 
         filename = Path(DATA_FILE_FORMAT.format(ts=int(time())))
         await orig_evt.download_media(filename)
