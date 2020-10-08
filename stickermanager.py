@@ -210,7 +210,7 @@ def fancy_round(val: Number) -> Number:
 async def init(bot: TelegramClient, modules: dict) -> None:
     utils = modules['utils']
 
-    @bot.on(events.NewMessage(pattern='#addsticker (.+)', chats=ALLOWED_CHATS))
+    @bot.on(events.NewMessage(pattern='#addsticker(?: (.+))?', chats=ALLOWED_CHATS))
     async def start_poll(event: Union[events.NewMessage.Event, Message]) -> None:
         if not event.is_reply:
             return
@@ -251,6 +251,12 @@ async def init(bot: TelegramClient, modules: dict) -> None:
         if not orig_evt.photo and (not orig_evt.sticker or
                                    orig_evt.sticker.mime_type == 'application/x-tgsticker'):
             return
+        if emoji is None:
+            if orig_evt.file.emoji:
+                emoji = orig_evt.file.emoji
+            else:
+                return
+
 
         filename = Path(DATA_FILE_FORMAT.format(ts=int(time())))
         await orig_evt.download_media(filename)
