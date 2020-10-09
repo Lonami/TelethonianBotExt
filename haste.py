@@ -4,6 +4,9 @@ import re
 from telethon import events, types
 
 
+_MAX_MSG_DISTANCE = 10
+
+
 async def init(bot, modules):
     try:
         import aiohttp
@@ -25,6 +28,15 @@ async def init(bot, modules):
 
         msg = await event.get_reply_message()
         if len(msg.raw_text or '') < 200:
+            sent = await event.respond('Not bothering to paste such a short message.')
+            await asyncio.sleep(10)
+            await sent.delete()
+            return
+
+        if event.id - msg.id > _MAX_MSG_DISTANCE:
+            sent = await event.respond('The message is too old for a paste to matter now.')
+            await asyncio.sleep(10)
+            await sent.delete()
             return
 
         sent = await event.respond(
