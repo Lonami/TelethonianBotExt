@@ -1,13 +1,14 @@
 import json
 import re
 import os
+from pathlib import Path
 
 from telethon import events
 
 # TODO Make this better
 template = "The cause of this error is most likely {cause}. To fix it you need to {solution}"
-with open(os.path.join(os.path.dirname(__file__), "faq.json"), "r", encoding="utf-8") as file:
-    errors = json.load(file)
+faq_json = Path(__file__).parent / "faq.json"
+errors = json.loads(faq_json.read_text(encoding="utf-8"))
 
 FAQ_URL = 'https://docs.telethon.dev/en/latest/quick-references/faq.html'
 
