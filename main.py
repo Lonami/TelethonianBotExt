@@ -24,7 +24,7 @@ UPDATES = (
 )
 
 SPAM = (
-    "Telethon is free software. That means using it is a right: you are " 
+    "Telethon is free software. That means using it is a right: you are "
     "free to use it for absolutely any purpose whatsoever. However, help "
     "and support with using it is a privilege. If you misbehave or want "
     "to do bad things, nobody is obligated to help you and you're not "
@@ -38,6 +38,14 @@ OFFTOPIC = {
     -1001200633650:
     'That seems to be related to Telethon. Try asking in @TelethonChat'
 }
+
+TOPIC = (
+    "This group is for **usage questions about Telethon only**, and "
+    "occasionally about semi-related topics like MTProto. Anything that does "
+    "not directly involve any of the two does not belong here, and questions "
+    "regarding general Python knowledge or use of any other libraries **does "
+    "not belong here**. Please ask elsewhere."
+)
 
 UNKNOWN_OFFTOPIC = (
     "I don't know of any off-topic group for this chat! Maybe you want to "
@@ -111,9 +119,9 @@ async def init(bot):
         ])
 
 
-    @bot.on(events.NewMessage(pattern='(?i)#(?:docs|ref) (.+)', forwards=False))
+    @bot.on(events.NewMessage(pattern='(?i)#ref (.+)', forwards=False))
     async def handler(event):
-        """#docs or #ref query: Like #search but shows the query."""
+        """#ref query: Like #search but shows the query."""
         q1 = event.pattern_match.group(1)
         q2 = urllib.parse.quote(q1)
         await asyncio.wait([
@@ -122,9 +130,9 @@ async def init(bot):
         ])
 
 
-    @bot.on(events.NewMessage(pattern='#rt(f)?d', forwards=False))
+    @bot.on(events.NewMessage(pattern='#(?:rt(f)?d|docs)', forwards=False))
     async def handler(event):
-        """#rtd: Tells the user to please read the docs."""
+        """#docs or #rtd: Tells the user to please read the docs."""
         rtd = RTFD if event.pattern_match.group(1) else RTD
         await asyncio.wait([
             event.delete(),
@@ -166,6 +174,15 @@ async def init(bot):
         await asyncio.wait([
             event.delete(),
             event.respond(OFFTOPIC.get(event.chat_id, UNKNOWN_OFFTOPIC), reply_to=event.reply_to_msg_id)
+        ])
+
+
+    @bot.on(events.NewMessage(pattern='(?i)#topic', forwards=False))
+    async def handler(event):
+        """#topic: Explains the topic of the group to the user."""
+        await asyncio.wait([
+            event.delete(),
+            event.respond(TOPIC, reply_to=event.reply_to_msg_id)
         ])
 
 
