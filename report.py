@@ -12,8 +12,8 @@ async def init(bot):
         # )
         mentions = 'Reported to admins.'
         async for x in event.client.iter_participants(event.chat_id, filter=ChannelParticipantsAdmins):
-        if not x.bot:
-            mentions += f"[\u2063](tg://user?id={x.id})"
+            if not x.bot:
+                mentions += f"[\u2063](tg://user?id={x.id})"
         if event.reply_to_msg_id:
             reply_message = await event.get_reply_message()
             await reply_message.reply(mentions)
