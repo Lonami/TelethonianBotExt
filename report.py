@@ -20,9 +20,9 @@ async def init(bot):
         reply_message = await event.get_reply_message()
         if not reply_message:
             return
-        is_link = any([
-            True if isinstance(
-                e, 
+        is_link = any(
+            isinstance(
+                entity, 
                 (
                     MessageEntityEmail,
                     MessageEntityMention,
@@ -30,8 +30,8 @@ async def init(bot):
                     MessageEntityTextUrl,
                     MessageEntityUrl
                 )
-            ) else False for e in reply_message.entities or []
-        ])
+            ) for entity in (reply_message.entities or [])
+        )
         if not (
             reply_message.media or 
             is_link
