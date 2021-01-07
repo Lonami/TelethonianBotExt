@@ -1,39 +1,30 @@
 import time
-from typing import List, Union
+from typing import Dict, List, Union
 
 from telethon import TelegramClient
 from telethon.errors import UserIsBlockedError
 from telethon.events import NewMessage
 from telethon.tl.custom import Message
-from telethon.tl.types import (
-    Channel,
-    ChannelParticipantsAdmins,
-    Chat,
-    MessageEntityEmail,
-    MessageEntityMention,
-    MessageEntityMentionName,
-    MessageEntityTextUrl,
-    MessageEntityUrl,
-    User,
-)
+from telethon.tl.types import (Channel, ChannelParticipantsAdmins, Chat,
+                               MessageEntityEmail, MessageEntityMention,
+                               MessageEntityMentionName, MessageEntityTextUrl,
+                               MessageEntityUrl, User)
 
 
-class ReportedMessage:
-    def __init__(
-        self, msg_id: int, reported_by: int, reported_in: int, report_time: float
-    ):
-        self.msg_id: int = msg_id
-        self.reported_by: int = reported_by
-        self.reported_in: int = reported_in
-        self.report_time: float = report_time
+class ReportedMessages:
+    def __init__(self):
+        self.reported_messages: List[id] = []
+        self.last_time: float = 0.0
 
-
-REPORTS: List[ReportedMessage] = []
+    def add(self, msg_id: int):
+        self.reported_messages.append(msg_id)
+        self.last_time = time.time()
 
 
 async def init(bot: TelegramClient):
     COOLDOWN = 10 * 60
-    MAX_N_REPORTED = 1
+    REPORTS: Dict[int, ReportedMessages] = {}
+    MAX_N_REPORTS = 5
 
     @bot.on(
         NewMessage(
@@ -41,26 +32,8 @@ async def init(bot: TelegramClient):
         )
     )
     async def report(event: Message):
-        global REPORTS
-
+        reports: Union[ReportedMessages, None] = REPORTS.get(event.chat_id, None)
         reply_message: Message = await event.get_reply_message()
-
-        if REPORTS:
-            reported_chat: List[ReportedMessage] = [
-                x for x in REPORTS if x.reported_in == event.chat_id
-            ]
-            reported_messages: List[ReportedMessage] = [
-                x for x in REPORTS if x.msg_id == reply_message.id
-            ]
-            if reported_chat:
-                if (time.time() - reported_chat[0].report_time) < COOLDOWN:
-                    await event.delete()
-                    return
-                elif len(reported_messages) >= MAX_N_REPORTED:
-                    await event.delete()
-                    return
-                else:
-                    REPORTS = [x for x in REPORTS if x.reported_in != event.chat_id]
 
         if not (
             any(
@@ -80,9 +53,20 @@ async def init(bot: TelegramClient):
         ):
             await event.delete()
             return
-        if bool([x for x in REPORTS if x.msg_id == reply_message.id]):
-            await event.delete()
-            return
+
+        if reports:
+            if (time.time() - reports.last_time) < COOLDOWN:
+                await event.delete()
+                return
+            if reply_message.id in reports.reported_messages[:MAX_N_REPORTS]:
+                await event.delete()
+                return
+            reports.add(reply_message.id)
+            REPORTS[event.chat_id] = reports
+        else:
+            reports = ReportedMessages()
+            reports.add(reply_message.id)
+            REPORTS[event.chat_id] = reports
 
         sender: User = await event.get_sender()
         chat: Union[Chat, Channel] = await event.get_chat()
@@ -101,9 +85,4 @@ async def init(bot: TelegramClient):
                     pass
         await reply_message.reply(
             f"[{sender.first_name}](t.me/{sender.id}) reported this message to admins"
-        )
-        REPORTS.append(
-            ReportedMessage(
-                reply_message.id, event.sender_id, event.chat_id, time.time()
-            )
         )
