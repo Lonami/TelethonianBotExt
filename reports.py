@@ -13,17 +13,20 @@ from telethon.tl.types import (Channel, ChannelParticipantsAdmins, Chat,
 
 
 class ReportedMessages:
-    def __init__(self):
+    def __init__(self, max_len: int):
         self.reported_messages: Deque[int] = deque()
+        self.max_len = max_len
         self.last_time: float = 0.0
 
     def add(self, msg_id: int):
         self.reported_messages.append(msg_id)
         self.last_time = time.time()
+        if len(self.reported_messages) > self.max_len:
+            self.reported_messages.popleft()
 
-    def is_index_at_max(self, msg_id: int, max_index: int):
+    def is_index_at_max(self, msg_id: int):
         try:
-            self.reported_messages.index(msg_id, 0, max_index)
+            self.reported_messages.index(msg_id, 0, self.max_len)
         except ValueError:
             return False
         return True
@@ -57,11 +60,11 @@ async def init(bot: TelegramClient):
             return
 
         if not reports:
-            reports = ReportedMessages()
+            reports = ReportedMessages(max_len=MAX_N_REPORTS)
         if reports.is_cooldown_active(COOLDOWN):
             await event.delete()
             return
-        if reports.is_index_at_max(reply_message.id, MAX_N_REPORTS):
+        if reports.is_index_at_max(reply_message.id):
             await event.delete()
             return
 
