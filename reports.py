@@ -1,5 +1,6 @@
 import time
-from typing import Dict, List, Union
+from typing import Dict, Union, Deque
+from collections import deque
 
 from telethon import TelegramClient
 from telethon.errors import UserIsBlockedError
@@ -13,12 +14,19 @@ from telethon.tl.types import (Channel, ChannelParticipantsAdmins, Chat,
 
 class ReportedMessages:
     def __init__(self):
-        self.reported_messages: List[id] = []
+        self.reported_messages: Deque[int] = deque()
         self.last_time: float = 0.0
 
     def add(self, msg_id: int):
         self.reported_messages.append(msg_id)
         self.last_time = time.time()
+
+    def is_index_at_max(self, msg_id: int, max_index: int):
+        try:
+            self.reported_messages.index(msg_id, 0, max_index)
+        except ValueError:
+            return False
+        return True
 
 
 async def init(bot: TelegramClient):
@@ -48,7 +56,7 @@ async def init(bot: TelegramClient):
             if (time.time() - reports.last_time) < COOLDOWN:
                 await event.delete()
                 return
-            if reply_message.id in reports.reported_messages[:MAX_N_REPORTS]:
+            if reports.is_index_at_max(reply_message.id, MAX_N_REPORTS):
                 await event.delete()
                 return
             reports.add(reply_message.id)
