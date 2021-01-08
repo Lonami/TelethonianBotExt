@@ -24,12 +24,16 @@ async def init(bot):
 
     @bot.on(events.ChatAction)
     async def handler(event):
+        chat_id = event.chat_id
         joined = event.user_joined or event.user_added
         left = event.user_left or event.user_kicked
-        chat_id = event.chat_id
-
+        welcome = WELCOME.get(chat_id, None)
+        farewell = FAREWELL.get(chat_id, None)
         if not joined and not left:
             return
+        if not welcome and not farewell:
+            return
+
         if event.chat_id in last_welcome:
             try:
                 await last_welcome[chat_id].delete()
@@ -37,12 +41,9 @@ async def init(bot):
                 # We believe this happens when trying to delete old messages
                 pass
 
-        args, kwargs = None, None
-
-        if joined and chat_id in WELCOME:
+        if joined:
             args, kwargs = WELCOME[chat_id]
-        if left and chat_id in FAREWELL:
+        if left:
             args, kwargs = FAREWELL[chat_id]
 
-        if args or kwargs:
-            await event.reply(*args, **kwargs)
+        await event.reply(*args, **kwargs)
