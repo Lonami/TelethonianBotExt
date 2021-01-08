@@ -22,7 +22,7 @@ class ReportedMessages:
         self.reported_messages.append(msg_id)
         self.last_time = time.time()
 
-    def is_id_last_x(self, msg_id: int):
+    def is_id_reported(self, msg_id: int):
         return msg_id in self.reported_messages
 
     def is_cooldown_active(self, cooldown_time: int):
@@ -58,7 +58,7 @@ async def init(bot: TelegramClient):
         if reports.is_cooldown_active(COOLDOWN):
             await event.delete()
             return
-        if reports.is_id_last_x(reply_message.id):
+        if reports.is_id_reported(reply_message.id):
             await event.delete()
             return
 
