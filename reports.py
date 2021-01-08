@@ -14,15 +14,12 @@ from telethon.tl.types import (Channel, ChannelParticipantsAdmins, Chat,
 
 class ReportedMessages:
     def __init__(self, max_len: int):
-        self.reported_messages: Deque[int] = deque()
-        self.max_len = max_len
+        self.reported_messages: Deque[int] = deque(maxlen=max_len)
         self.last_time: float = 0.0
 
     def add(self, msg_id: int):
         self.reported_messages.append(msg_id)
         self.last_time = time.time()
-        if len(self.reported_messages) > self.max_len:
-            self.reported_messages.popleft()
 
     def is_id_last_x(self, msg_id: int):
         return msg_id in self.reported_messages
@@ -33,9 +30,9 @@ class ReportedMessages:
 
 
 async def init(bot: TelegramClient):
-    COOLDOWN = 10 * 60
+    COOLDOWN: int = 10 * 60
     REPORTS: Dict[int, ReportedMessages] = {}
-    MAX_N_REPORTS = 5
+    MAX_N_REPORTS: int = 5
 
     @bot.on(NewMessage(
         pattern=r"^(#|\/)report",
