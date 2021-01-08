@@ -34,7 +34,7 @@ async def init(bot):
         if not welcome and not farewell:
             return
 
-        if event.chat_id in last_welcome:
+        if chat_id in last_welcome:
             try:
                 await last_welcome[chat_id].delete()
             except errors.MessageDeleteForbiddenError:
@@ -46,4 +46,4 @@ async def init(bot):
         if left and farewell:
             args, kwargs = farewell
 
-        await event.reply(*args, **kwargs)
+        last_welcome[chat_id] = await event.reply(*args, **kwargs)
