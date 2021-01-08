@@ -24,12 +24,8 @@ class ReportedMessages:
         if len(self.reported_messages) > self.max_len:
             self.reported_messages.popleft()
 
-    def is_index_at_max(self, msg_id: int):
-        try:
-            self.reported_messages.index(msg_id, 0, self.max_len)
-        except ValueError:
-            return False
-        return True
+    def is_id_last_x(self, msg_id: int):
+        return msg_id in self.reported_messages
 
     def is_cooldown_active(self, cooldown_time: int):
         return self.last_time != 0.0 and (time.time() - self.last_time) < cooldown_time
@@ -64,7 +60,7 @@ async def init(bot: TelegramClient):
         if reports.is_cooldown_active(COOLDOWN):
             await event.delete()
             return
-        if reports.is_index_at_max(reply_message.id):
+        if reports.is_id_last_x(reply_message.id):
             await event.delete()
             return
 
