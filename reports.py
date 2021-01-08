@@ -6,10 +6,11 @@ from telethon import TelegramClient
 from telethon.errors import UserIsBlockedError
 from telethon.events import NewMessage
 from telethon.tl.custom import Message
-from telethon.tl.types import (Channel, ChannelParticipantsAdmins, Chat,
-                               MessageEntityEmail, MessageEntityMention,
-                               MessageEntityMentionName, MessageEntityTextUrl,
-                               MessageEntityUrl, User)
+from telethon.tl.types import (
+    Channel, ChannelParticipantsAdmins, Chat, MessageEntityEmail,
+    MessageEntityMention, MessageEntityMentionName, MessageEntityTextUrl,
+    MessageEntityUrl, User
+)
 
 
 class ReportedMessages:
