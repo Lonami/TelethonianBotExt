@@ -19,8 +19,19 @@ FAREWELL = {
 }
 
 
+async def delete(map, chat_id):
+    msg = map.pop(chat_id, None)
+    if msg:
+        try:
+            await msg.delete()
+        except errors.MessageDeleteForbiddenError:
+            # We believe this happens when trying to delete old messages
+            pass
+
+
 async def init(bot):
     last_welcome = {}
+    last_farewell = {}
 
     @bot.on(events.ChatAction)
     async def handler(event):
@@ -34,16 +45,12 @@ async def init(bot):
         if not welcome and not farewell:
             return
 
-        if event.chat_id in last_welcome:
-            try:
-                await last_welcome[chat_id].delete()
-            except errors.MessageDeleteForbiddenError:
-                # We believe this happens when trying to delete old messages
-                pass
-
         if joined and welcome:
             args, kwargs = welcome
+            last_map = last_welcome
         if left and farewell:
             args, kwargs = farewell
+            last_map = last_farewell
 
-        await event.reply(*args, **kwargs)
+        await delete(last_map, chat_id)
+        last_map[chat_id] = await event.reply(*args, **kwargs)
