@@ -20,9 +20,10 @@ FAREWELL = {
 
 
 async def delete(map, chat_id):
-    if chat_id in map:
+    msg = map.pop(chat_id, None)
+    if msg:
         try:
-            await map[chat_id].delete()
+            await msg.delete()
         except errors.MessageDeleteForbiddenError:
             # We believe this happens when trying to delete old messages
             pass
