@@ -26,31 +26,21 @@ async def init(bot: TelegramClient):
     REPORTS: Dict[int, ReportedMessages] = {}
     MAX_N_REPORTS = 5
 
-    @bot.on(
-        NewMessage(
-            pattern=r"^(#|\/)report", func=lambda e: not e.is_private and e.is_reply
-        )
-    )
+    @bot.on(NewMessage(
+        pattern=r"^(#|\/)report",
+        func=lambda e: not e.is_private and e.is_reply
+    ))
     async def report(event: Message):
         reports: Union[ReportedMessages, None] = REPORTS.get(event.chat_id, None)
         reply_message: Message = await event.get_reply_message()
 
-        if not (
-            any(
-                isinstance(
-                    entity,
-                    (
-                        MessageEntityEmail,
-                        MessageEntityMention,
-                        MessageEntityMentionName,
-                        MessageEntityTextUrl,
-                        MessageEntityUrl,
-                    ),
-                )
-                for entity in (reply_message.entities or ())
-            )
-            and not bool(event.file)
-        ):
+        if not (event.file or any(isinstance(entity, (
+            MessageEntityEmail,
+            MessageEntityMention,
+            MessageEntityMentionName,
+            MessageEntityTextUrl,
+            MessageEntityUrl,
+        )) for entity in (reply_message.entities or ()))):
             await event.delete()
             return
 
@@ -72,7 +62,7 @@ async def init(bot: TelegramClient):
         chat: Union[Chat, Channel] = await event.get_chat()
 
         async for admin in bot.iter_participants(
-            event.chat_id, filter=ChannelParticipantsAdmins
+                event.chat_id, filter=ChannelParticipantsAdmins
         ):
             admin: User
             if not admin.bot:
