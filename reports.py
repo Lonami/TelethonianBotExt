@@ -28,6 +28,10 @@ class ReportedMessages:
             return False
         return True
 
+    def is_cooldown_active(self, cooldown_time: int):
+        return self.last_time != 0.0 and (time.time() - self.last_time) < cooldown_time
+
+
 
 async def init(bot: TelegramClient):
     COOLDOWN = 10 * 60
@@ -52,26 +56,24 @@ async def init(bot: TelegramClient):
             await event.delete()
             return
 
-        if reports:
-            if (time.time() - reports.last_time) < COOLDOWN:
-                await event.delete()
-                return
-            if reports.is_index_at_max(reply_message.id, MAX_N_REPORTS):
-                await event.delete()
-                return
-            reports.add(reply_message.id)
-            REPORTS[event.chat_id] = reports
-        else:
+        if not reports:
             reports = ReportedMessages()
-            reports.add(reply_message.id)
-            REPORTS[event.chat_id] = reports
+        if reports.is_cooldown_active(COOLDOWN):
+            await event.delete()
+            return
+        if reports.is_index_at_max(reply_message.id, MAX_N_REPORTS):
+            await event.delete()
+            return
+
+        reports.add(reply_message.id)
+        REPORTS[event.chat_id] = reports
 
         sender: User = await event.get_sender()
         chat: Union[Chat, Channel] = await event.get_chat()
 
         async for admin in bot.iter_participants(
-                event.chat_id, filter=ChannelParticipantsAdmins
-        ):
+                event.chat_id,
+                filter=ChannelParticipantsAdmins):
             admin: User
             if not admin.bot:
                 try:
