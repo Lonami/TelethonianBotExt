@@ -37,23 +37,12 @@ async def init(bot):
                 # We believe this happens when trying to delete old messages
                 pass
 
-        file = None
-        text = None
+        args, kwargs = None, None
 
         if joined and chat_id in WELCOME:
-            text = WELCOME[chat_id][0][0]
-            extra = WELCOME[chat_id][1]
-            if extra:
-                # Get extra values from the dict and pass them to event.reply [ex files, parameters]
-                file = extra.get('file', None)
-        if left and chat_id in FAREWELL.keys():
-            text = FAREWELL[chat_id][0][0]
-            extra = FAREWELL[chat_id][1]
-            if extra:
-                # Get extra values from the dict and pass them to event.reply [ex files, parameters]
-                file = extra.get('file', None)
+            args, kwargs = WELCOME[chat_id]
+        if left and chat_id in FAREWELL:
+            args, kwargs = FAREWELL[chat_id]
 
-        if file:
-            file = await bot.upload_file(file)
-
-        last_welcome[event.chat_id] = await event.reply(text, file=file)
+        if args or kwargs:
+            await event.reply(*args, **kwargs)
