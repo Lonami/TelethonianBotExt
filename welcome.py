@@ -41,9 +41,9 @@ async def init(bot):
                 # We believe this happens when trying to delete old messages
                 pass
 
-        if joined:
-            args, kwargs = WELCOME[chat_id]
-        if left:
-            args, kwargs = FAREWELL[chat_id]
+        if joined and welcome:
+            args, kwargs = welcome
+        if left and farewell:
+            args, kwargs = farewell
 
         await event.reply(*args, **kwargs)
