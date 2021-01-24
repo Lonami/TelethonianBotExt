@@ -11,7 +11,7 @@ sticker short	-	telethonpacktopic_by_telethonianbot
 sticker owner	-	10885151
 
 # The number of votes required for a sticker to be approved.
-votes required	8	-
+votes required	9	-
 
 # The vote weight for users who aren't listed.
 default weight	0.5	-
