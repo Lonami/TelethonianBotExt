@@ -98,6 +98,27 @@ LEARN_PYTHON = (
     "Python before trying again. " + GOOD_RESOURCES
 )
 
+BUG_REPORT = (
+    "If you believe you have found a bug in the library and you are pretty "
+    "sure that the issue is not in your code, please [report it in GitHub]"
+    "(https://github.com/LonamiWebs/Telethon/issues/new/choose). This group "
+    "is only intended to help people with Telethon, it is __not__ the right "
+    "place to report bugs.\n\n"
+    "Before reporting in GitHub, **please make sure to provide**:\n"
+    "• A small, self-contained snippet of code that reproduces the issue. "
+    "Pasting several hundred lines of messy code is unlikely to get any help "
+    "soon.\n"
+    "• Description of the environment. Does it happen with users, bots, in "
+    "private chats, groups, megagroups, broadcast channels, with proxy, with "
+    "certain messages, media, datacenters… You get the idea. Include "
+    "everything that may be relevant, and even provide the media / message / "
+    "link if possible.\n"
+    "• [Search for your issue first](https://github.com/LonamiWebs/Telethon/"
+    "issues). It might already have been fixed.\n"
+    "• Make sure you __truly__ are using the latest version. Run your code "
+    "with `import telethon; print(telethon.__version__)` to verify this."
+)
+
 
 async def init(bot):
     @bot.on(events.NewMessage(pattern='#full', forwards=False))
@@ -211,6 +232,16 @@ async def init(bot):
             event.delete(),
             event.respond(
                 LEARN_PYTHON, reply_to=event.reply_to_msg_id, link_preview=False)
+        ])
+
+
+    @bot.on(events.NewMessage(pattern='(?i)#bugs?', forwards=False))
+    async def handler(event):
+        """#bug or #bugs: Advices the user to report bugs in GitHub."""
+        await asyncio.wait([
+            event.delete(),
+            event.respond(
+                BUG_REPORT, reply_to=event.reply_to_msg_id, link_preview=False)
         ])
 
 
