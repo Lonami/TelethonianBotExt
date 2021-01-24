@@ -11,7 +11,7 @@ sticker short	-	telethonpacktopic_by_telethonianbot
 sticker owner	-	10885151
 
 # The number of votes required for a sticker to be approved.
-votes required	9	-
+votes required	9.5	-
 
 # The vote weight for users who aren't listed.
 default weight	0.5	-
@@ -53,7 +53,7 @@ allowed chats	-	-1001200633650
 33517996 	1	J J
 326190204	2	artyom
 181585055	1	Viktor
-942356877	2	Alex
+942356877	3	Alex
 1177787005	1	Jonatan
 673656739	1	Katelyn
 593700134	1	arthur wayne
