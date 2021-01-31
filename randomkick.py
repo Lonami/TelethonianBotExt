@@ -146,6 +146,7 @@ async def init(bot, modules):
                 parse_mode='html')
             # clear wait delay
             chosen.clicked_save()
+            return
         try:
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
