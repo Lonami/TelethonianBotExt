@@ -135,9 +135,9 @@ async def init(bot, modules):
                 await asyncio.sleep(random.randint(7, 10))
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
-        warn_message = await bot.get_messages(GROUP, event.id)
+        warn_message = await bot.get_messages(GROUP, event.id) if warn else None
         # message deleted or expired
-        if not warn_message:
+        if warn and not warn_message:
             await bot.send_message(
                 GROUP,
                 'Who the he*ck deleted my warning message? 3:<\n'
@@ -146,6 +146,7 @@ async def init(bot, modules):
                 parse_mode='html')
             # clear wait delay
             chosen.clicked_save()
+            return
         try:
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
