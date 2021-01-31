@@ -81,5 +81,5 @@ async def init(bot: TelegramClient):
                 except (UserIsBlockedError, ValueError):
                     pass
         await reply_message.reply(
-            f"[{sender.first_name}](t.me/{sender.id}) reported this message to admins"
+            f"[{sender.first_name}](tg://user?id={sender.id}) reported this message to admins"
         )
