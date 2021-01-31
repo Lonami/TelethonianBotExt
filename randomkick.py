@@ -1,4 +1,4 @@
-# Adapted from https://github.com/painor/randomkickbot
+﻿# Adapted from https://github.com/painor/randomkickbot
 import asyncio
 import datetime
 import logging
@@ -19,6 +19,7 @@ TARGET_FILE = os.path.join(os.path.dirname(__file__), 'randomkick.target')
 
 utils = None
 chosen = None
+warn_message_id = None
 last_talked = {}
 
 
@@ -127,6 +128,8 @@ async def init(bot, modules):
                 ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
                 buttons=Button.inline('click me to stay', b'alive'), parse_mode='html'
             )
+            global warn_message_id
+            warn_message_id = event.id
 
         if chosen.id == self_id:
             await asyncio.sleep(random.randint(10, 20))
@@ -139,7 +142,19 @@ async def init(bot, modules):
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
             try:
-                await bot.kick_participant(GROUP, chosen.id)
+                warn_message = await bot.get_message(GROUP, warn_message_id)
+                # message deleted or expired
+                if not warn_message:
+                    await bot.send_message(
+                        GROUP,
+                        f'Who the he*ck deleted my warning message? 3:<\n'
+                        'Guess I shouldn\'t kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
+                        f' for being inactive…',
+                        parse_mode='html')
+                    # clear wait delay
+                    chosen.clicked_save()
+                else:
+                    await bot.kick_participant(GROUP, chosen.id)
             except errors.UserAdminInvalidError:
                 await bot.send_message(
                     GROUP,
