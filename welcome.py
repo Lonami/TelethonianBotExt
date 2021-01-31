@@ -11,11 +11,11 @@ MAIN_WELCOME = (
 
 WELCOME = {
     -1001109500936: ((MAIN_WELCOME,), {}),
-    -1001200633650: ((), {'file': 'plugins/hello.webp'}),
+    -1001200633650: ((), {'file': 'plugins/stickers/hello.webp'}),
 }
 
 FAREWELL = {
-    -1001200633650: ((), {'file': 'plugins/bye.webp'}),
+    -1001200633650: ((), {'file': 'plugins/stickers/bye.webp'}),
 }
 
 
