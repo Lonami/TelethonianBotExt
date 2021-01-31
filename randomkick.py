@@ -135,6 +135,18 @@ async def init(bot, modules):
                 await asyncio.sleep(random.randint(7, 10))
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
+        warn_message = await bot.get_messages(GROUP, ids=event.id) if warn else None
+        # message deleted or expired
+        if warn and not warn_message:
+            await bot.send_message(
+                GROUP,
+                'Who the he*ck deleted my warning message? 3:<\n'
+                f'Guess I shouldn\'t kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
+                ' for being inactive…',
+                parse_mode='html')
+            # clear wait delay
+            chosen.clicked_save()
+            return
         try:
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
@@ -149,8 +161,8 @@ async def init(bot, modules):
             else:
                 await bot.send_message(
                     GROUP,
-                    f'<a href="tg://user?id={chosen.id}">{chosen.name} '
-                    f'was kicked for being inactive</a>', parse_mode='html')
+                    f'<a href="tg://user?id={chosen.id}">{chosen.name}'
+                    f' was kicked for being inactive</a>', parse_mode='html')
 
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
@@ -173,8 +185,8 @@ async def init(bot, modules):
         last_talked[chosen.id] = time.time()
 
         await event.edit(
-            f'<a href="tg://user?id={chosen.id}">Congrats '
-            f'{chosen.name} you made it!</a>', buttons=None, parse_mode='html')
+            f'<a href="tg://user?id={chosen.id}">Congrats'
+            f' {chosen.name} you made it!</a>', buttons=None, parse_mode='html')
 
     # TODO This task is not properly terminated on disconnect
     bot.loop.create_task(kick_users())
