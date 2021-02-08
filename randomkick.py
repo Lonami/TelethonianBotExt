@@ -19,7 +19,6 @@ TARGET_FILE = os.path.join(os.path.dirname(__file__), 'randomkick.target')
 
 utils = None
 chosen = None
-warning_event = None
 last_talked = {}
 
 
@@ -121,8 +120,8 @@ async def init(bot, modules):
             await asyncio.sleep(8 * 60 * 60)
 
     async def kick_user(delay, *, warn):
+        warning_event = None
         if warn:
-            global warning_event
             warning_event = await bot.send_message(
                 GROUP,
                 '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
@@ -140,7 +139,7 @@ async def init(bot, modules):
         try:
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
-            if warning_event:  # shouldn't be None or False
+            if warning_event:
                 warn_message = await bot.get_messages(GROUP, ids=warning_event.id)
                 # message deleted or expired
                 if not warn_message:
