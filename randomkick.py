@@ -120,13 +120,14 @@ async def init(bot, modules):
             await asyncio.sleep(8 * 60 * 60)
 
     async def kick_user(delay, *, warn):
+        warning_event = None
         if warn:
-            event = await bot.send_message(
+            warning_event = await bot.send_message(
                 GROUP,
                 '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
                 ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
-                buttons=Button.inline('click me to stay', b'alive'), parse_mode='html'
-            )
+                buttons=Button.inline('click me to stay', b'alive'), 
+                    parse_mode='html')
 
         if chosen.id == self_id:
             await asyncio.sleep(random.randint(10, 20))
@@ -135,21 +136,25 @@ async def init(bot, modules):
                 await asyncio.sleep(random.randint(7, 10))
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
-        warn_message = await bot.get_messages(GROUP, ids=event.id) if warn else None
-        # message deleted or expired
-        if warn and not warn_message:
-            await bot.send_message(
-                GROUP,
-                'Who the he*ck deleted my warning message? 3:<\n'
-                f'Guess I shouldn\'t kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
-                ' for being inactive…',
-                parse_mode='html')
-            # clear wait delay
-            chosen.clicked_save()
-            return
         try:
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
+            if warning_event:
+                warn_message = await bot.get_messages(GROUP, ids=warning_event.id)
+                # message deleted or expired
+                if not warn_message:
+                    await bot.send_message(
+                        GROUP,
+                        'Who the he*ck deleted my warning message? 3:<\n'
+                        f'Guess I shouldn\'t kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
+                        ' for being inactive…',
+                        parse_mode='html')
+                    # clear wait delay and reset timer
+                    chosen.clicked_save()
+                    last_talked[chosen.id] = time.time()
+                    return  # handled
+
+            # Try kicking participant if warn message still exists
             try:
                 await bot.kick_participant(GROUP, chosen.id)
             except errors.UserAdminInvalidError:
@@ -162,7 +167,8 @@ async def init(bot, modules):
                 await bot.send_message(
                     GROUP,
                     f'<a href="tg://user?id={chosen.id}">{chosen.name}'
-                    f' was kicked for being inactive</a>', parse_mode='html')
+                    ' was kicked for being inactive</a>', 
+                    parse_mode='html')
 
     @bot.on(events.CallbackQuery)
     async def save_him(event: events.CallbackQuery.Event):
