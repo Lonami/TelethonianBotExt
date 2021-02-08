@@ -126,7 +126,7 @@ async def init(bot, modules):
                 '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
                 ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
                 buttons=Button.inline('click me to stay', b'alive'), 
-                parse_mode='html')
+                    parse_mode='html')
 
         if chosen.id == self_id:
             await asyncio.sleep(random.randint(10, 20))
