@@ -19,6 +19,7 @@ TARGET_FILE = os.path.join(os.path.dirname(__file__), 'randomkick.target')
 
 utils = None
 chosen = None
+warning_event = None
 last_talked = {}
 
 
@@ -121,7 +122,8 @@ async def init(bot, modules):
 
     async def kick_user(delay, *, warn):
         if warn:
-            event = await bot.send_message(
+            global warning_event
+            warning_event = await bot.send_message(
                 GROUP,
                 '<a href="tg://user?id={}">{}: you have 1 day to click this button or'
                 ' you will be automatically kicked</a>'.format(chosen.id, chosen.name),
@@ -138,19 +140,20 @@ async def init(bot, modules):
         try:
             await chosen.wait_save(delay)
         except asyncio.TimeoutError:
-            warn_message = await bot.get_messages(GROUP, ids=event.id)
-            # message deleted or expired
-            if not warn_message:
-                await bot.send_message(
-                    GROUP,
-                    'Who the he*ck deleted my warning message? 3:<\n'
-                    f'Guess I shouldn\'t kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
-                    ' for being inactive…',
-                    parse_mode='html')
-                # clear wait delay and reset timer
-                chosen.clicked_save()
-                last_talked[chosen.id] = time.time()
-                return  # handled
+            if warning_event:  # shouldn't be None or False
+                warn_message = await bot.get_messages(GROUP, ids=warning_event.id)
+                # message deleted or expired
+                if not warn_message:
+                    await bot.send_message(
+                        GROUP,
+                        'Who the he*ck deleted my warning message? 3:<\n'
+                        f'Guess I shouldn\'t kick <a href="tg://user?id={chosen.id}">{chosen.name}</a>'
+                        ' for being inactive…',
+                        parse_mode='html')
+                    # clear wait delay and reset timer
+                    chosen.clicked_save()
+                    last_talked[chosen.id] = time.time()
+                    return  # handled
 
             # Try kicking participant if warn message still exists
             try:
