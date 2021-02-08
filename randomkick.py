@@ -135,9 +135,9 @@ async def init(bot, modules):
                 await asyncio.sleep(random.randint(7, 10))
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
 
-        warn_message = await bot.get_messages(GROUP, ids=event.id) if warn else None
+        warn_message = await bot.get_messages(GROUP, ids=event.id)
         # message deleted or expired
-        if warn and not warn_message:
+        if not warn_message:
             await bot.send_message(
                 GROUP,
                 'Who the he*ck deleted my warning message? 3:<\n'
