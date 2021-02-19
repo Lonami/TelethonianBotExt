@@ -9,6 +9,7 @@ last_replies = defaultdict(lambda: deque(maxlen=10))
 
 SED_PATTERN = re.compile(r'^s/((?:\\/|[^/])+)/((?:\\/|[^/])*)/?(.*)')
 PREFIX = '「sed」\n'
+VOWELS = set("aeiouAEIOU")
 
 
 class UnknownFlag(ValueError):
@@ -31,7 +32,7 @@ def timeout(func, n, *args):
     if p.is_alive():
         p.terminate()
         p.join()
-        raise TimeoutError('Process {} timed out after {}'.format(func, n))
+        raise TimeoutError(f'Process {func} timed out after {n}')
     elif inp.poll(n):
         res, err = inp.recv()
         if err:
@@ -89,11 +90,13 @@ async def init(bot):
                 await message.reply('are you… trying to DoS me?')
                 break
             except Exception as e:
-                string = str(e).strip()
-                if string:
-                    await message.reply('you caused a {}, dummy'.format(type(e).__name__))
+                ex_string = str(e).strip()
+                if ex_string:
+                    ex_name = type(e).__name__
+                    v = ex_name[0] in VOWELS
+                    await message.reply(f'you caused a{"n" if v else ""} {ex_name}, dummy')
                 else:
-                    await message.reply('you caused "{}", dummy'.format(string))
+                    await message.reply(f'you caused "{ex_string}", dummy')
                 break
 
             if new is None:
@@ -102,7 +105,7 @@ async def init(bot):
             try:
                 sent = await message.reply(new, parse_mode=None)
             except Exception as e:
-                await message.reply('owh :(\n' + str(e))
+                await message.reply(f'owh :(\n{e}')
             else:
                 last_msgs[event.chat_id].append(sent)
                 where = event.chat_id if event.is_channel else None
