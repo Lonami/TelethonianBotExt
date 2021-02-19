@@ -9,6 +9,7 @@ last_replies = defaultdict(lambda: deque(maxlen=10))
 
 SED_PATTERN = re.compile(r'^s/((?:\\/|[^/])+)/((?:\\/|[^/])*)/?(.*)')
 PREFIX = '「sed」\n'
+VOWELS = set("aeiouAEIOU")
 
 
 class UnknownFlag(ValueError):
@@ -92,7 +93,7 @@ async def init(bot):
                 ex_string = str(e).strip()
                 if ex_string:
                     ex_name = type(e).__name__
-                    v = ex_name[0].lower() in "aeiou"
+                    v = ex_name[0] in VOWELS
                     await message.reply(f'you caused a{"n" if v else ""} {ex_name}, dummy')
                 else:
                     await message.reply(f'you caused "{ex_string}", dummy')
