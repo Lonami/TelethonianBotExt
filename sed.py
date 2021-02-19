@@ -9,7 +9,7 @@ last_replies = defaultdict(lambda: deque(maxlen=10))
 
 SED_PATTERN = re.compile(r'^s/((?:\\/|[^/])+)/((?:\\/|[^/])*)/?(.*)')
 PREFIX = '「sed」\n'
-VOWELS = set("aeiouAEIOU")
+VOWELS = dict.fromkeys("aeiouAEIOU", True)
 
 
 class UnknownFlag(ValueError):
