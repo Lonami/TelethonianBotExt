@@ -22,14 +22,19 @@ CHAT_USERNAMES = {
 async def init(bot):
     @bot.on(events.NewMessage)
     async def handler(event):
+        if event.sender_id == MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT:
+            return
+
         m = await event.get_reply_message()
         if m.sender_id == MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT:
             cu = CHAT_USERNAMES.get(event.chat_id, f'c/{utils.get_peer_id(event.to_id, add_mark=False)}')
             await event.delete()
             await event.respond(PLS_NO_REPLY.format(cu, event.reply_to_msg_id))
+            return
 
         for e, t in event.get_entities_text():
-            if (isinstance(e, types.MessageEntityMention) and t.lstrip('@').lower() == MURTPITOTC_USERNAMEO) or (
+            if (isinstance(e, types.MessageEntityMention) and t.lstrip('@').lower() == MURTPITOTC_USERNAME) or (
                     isinstance(e, types.MessageEntityMentionName) and e.user_id == MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT):
                 await event.delete()
                 await event.respond(PLS_NO_TAG)
+                break
