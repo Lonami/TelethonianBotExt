@@ -65,14 +65,18 @@ async def init(bot, modules):
             async with session.post('https://del.dog/documents',
                                     data=code.encode('utf-8')) as resp:
                 if resp.status >= 300:
-                    await sent.edit("del.dog seems to be down… ( ^^')")
-                    return
-
-                haste = (await resp.json())['key']
+                    async with session.post(
+                        "https://nekobin.com/api/documents", json={"content": code}) as r:
+                        if r.status >= 300:
+                            await sent.edit("Both del.dog and nekobin.com seem to be down… ( ^^')")
+                            return
+                        paste = f"nekobin.com/{(await r.json())['result']['key']}.py"
+                else:
+                    paste = f"del.dog/{(await resp.json())['key']}.py"
 
         await asyncio.wait([
             msg.delete(),
             sent.edit(f'<a href="tg://user?id={msg.sender_id}">{name}</a> '
-                      f'said: {text} del.dog/{haste}.py'
+                      f'said: {text} {paste}'
                       .replace('  ', ' '), parse_mode='html')
         ])
