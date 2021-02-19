@@ -5,6 +5,14 @@ from telethon import events, utils, types
 MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT = 10885151
 MURTPITOTC_USERNAME = 'lonami'
 
+with open(os.path.join(os.path.dirname(__file__), 'admins.txt'), encoding="utf-8") as f:
+    ADMINS = {
+        int(line.strip().split()[0]): line.strip().split()[1]
+        for line in f
+        if not line.isspace()
+    }
+
+
 PLS_NO_REPLY = (
     f'Please do not reply to {MURTPITOTC_USERNAME}. They really do not like it.'
     ' If you need to quote their messages, use a link, like https://t.me/{}/{}'
@@ -22,7 +30,7 @@ CHAT_USERNAMES = {
 async def init(bot):
     @bot.on(events.NewMessage)
     async def handler(event):
-        if event.sender_id == MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT:
+        if event.sender_id in ADMINS:
             return
 
         m = await event.get_reply_message()
