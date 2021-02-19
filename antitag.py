@@ -26,7 +26,7 @@ async def init(bot):
             return
 
         m = await event.get_reply_message()
-        if m.sender_id == MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT:
+        if m and m.sender_id == MOST_UNNECESSARILY_REPLIED_TO_PERSON_IN_THE_OFFICIAL_TELETHON_CHAT:
             cu = CHAT_USERNAMES.get(event.chat_id, f'c/{utils.get_peer_id(event.to_id, add_mark=False)}')
             await event.delete()
             await event.respond(PLS_NO_REPLY.format(cu, event.reply_to_msg_id))
