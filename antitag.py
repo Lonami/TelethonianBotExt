@@ -14,11 +14,11 @@ with open(os.path.join(os.path.dirname(__file__), 'admins.txt'), encoding="utf-8
 
 
 PLS_NO_REPLY = (
-    f'Please do not reply to {MURTPITOTC_USERNAME}. They really do not like it.'
+    f'Please do not reply to any of the messages sent by the chat's admins. They really do not like it.'
     ' If you need to quote their messages, use a link, like https://t.me/{}/{}'
 )
 PLS_NO_TAG = (
-    f'Please do not unnecessarily tag {MURTPITOTC_USERNAME}. They really do not like it.'
+    f'Please do not unnecessarily tag chat's admins. They really do not like it.'
     f' If you want to mention them in your message, exclude the "@", like "{MURTPITOTC_USERNAME}"'
 )
 
