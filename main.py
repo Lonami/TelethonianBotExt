@@ -43,7 +43,7 @@ TOPIC = (
     "This group is for **usage questions about Telethon only**, and "
     "occasionally about semi-related topics like MTProto. Anything that does "
     "not directly involve any of the two does not belong here, and questions "
-    "regarding general Python knowledge or use of any other libraries **does "
+    "regarding general Python knowledge or use of any other libraries **do "
     "not belong here**. Please ask elsewhere."
 )
 
