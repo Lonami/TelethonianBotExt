@@ -3,7 +3,7 @@ from typing import Dict, Union, Deque
 from collections import deque
 
 from telethon import TelegramClient
-from telethon.errors import UserIsBlockedError
+from telethon.errors import RPCError
 from telethon.events import NewMessage
 from telethon.tl.custom import Message
 from telethon.tl.types import (
@@ -78,7 +78,7 @@ async def init(bot: TelegramClient):
                         admin.id,
                         f"[{sender.first_name}](tg://user?id={sender.id}) reported a [message](t.me/{chat.username}/{reply_message.id}) in [{chat.title}](t.me/{chat.username})",
                     )
-                except (UserIsBlockedError, ValueError):
+                except (RPCError, ValueError):
                     pass
         await reply_message.reply(
             f"[{sender.first_name}](tg://user?id={sender.id}) reported this message to admins"
