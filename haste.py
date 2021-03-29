@@ -28,8 +28,11 @@ async def init(bot, modules):
 
         msg = await event.get_reply_message()
         if msg.photo:
-            await msg.reply('Don\'t send photos with your code or errors. Paste the content in del.dog instead.')
+            sent = await msg.reply('Don\'t send photos with your code or errors. Paste the content in del.dog instead.')
+            await asyncio.sleep(10)
+            await sent.delete()
             return
+
         if len(msg.raw_text or '') < 200:
             sent = await event.respond('Not bothering to paste such a short message.')
             await asyncio.sleep(10)
