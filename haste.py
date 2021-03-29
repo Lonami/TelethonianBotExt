@@ -28,7 +28,12 @@ async def init(bot, modules):
 
         msg = await event.get_reply_message()
         if msg.photo:
-            sent = await msg.reply('Don\'t send photos with your code or errors. Paste the content in del.dog instead.')
+            sent = await event.respond('Don\'t send photos with your code or errors. Paste the content in del.dog instead.', reply_to=msg.reply_to_msg_id)
+            await asyncio.sleep(10)
+            await sent.delete()
+            return
+        if msg.media:
+            sent = await event.respond('Don\'t send your code or errors inside a file. Paste the content in del.dog instead.', reply_to=msg.reply_to_msg_id)
             await asyncio.sleep(10)
             await sent.delete()
             return
