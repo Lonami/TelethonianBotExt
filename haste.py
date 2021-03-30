@@ -28,12 +28,8 @@ async def init(bot, modules):
 
         msg = await event.get_reply_message()
 
-        if msg.photo:
-            await msg.reply('Don\'t send photos with your code or errors. Paste the content in del.dog instead.')
-            return
-
-        if msg.document:
-            await msg.reply('Please paste your code/error on del.dog so others can read it easily.')            
+        if msg.media:
+            await msg.reply('Please paste your code/error on del.dog or nekobin.com so others can read it easily.')            
             return
 
         if len(msg.raw_text or '') < 200:
