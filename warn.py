@@ -54,7 +54,7 @@ async def init(bot, modules):
         )
 
         what = event.raw_text.split(maxsplit=1)
-        what = None if len(what) < 2 else f' ({what[1]})'
+        what = '' if len(what) < 2 else f' ({what[1]})'
 
         stage = warned_people[reply.sender_id]
         await reply.respond(WARN_MESSAGES[stage].format(name=name, what=what), parse_mode='html')
