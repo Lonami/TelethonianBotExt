@@ -11,7 +11,7 @@ def get_display(entity):
         return 'A user'
 
     return re.sub(
-        r'[^\w\s]',
-        '',
+        r'[^!-~]+',
+        ' ',
         unidecode.unidecode(utils.get_display_name(entity))
     ).strip() or f'{entity.__class__.__name__} {entity.id}'
