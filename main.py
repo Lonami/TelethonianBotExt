@@ -161,7 +161,7 @@ async def init(bot):
         ])
 
 
-    @bot.on(events.NewMessage(pattern='#(updates|events?)', forwards=False))
+    @bot.on(events.NewMessage(pattern='#(updates|events)', forwards=False))
     async def handler(event):
         """#updates: Advices the user to read "Working with Updates"."""
         await asyncio.wait([
