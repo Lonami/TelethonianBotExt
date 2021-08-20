@@ -61,18 +61,12 @@ async def init(bot, modules):
             code = msg.raw_text
             text = ''
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post('https://del.dog/documents',
-                                    data=code.encode('utf-8')) as resp:
-                if resp.status >= 300:
-                    async with session.post(
-                        "https://nekobin.com/api/documents", json={"content": code}) as r:
-                        if r.status >= 300:
-                            await sent.edit("Both del.dog and nekobin.com seem to be down… ( ^^')")
-                            return
-                        paste = f"nekobin.com/{(await r.json())['result']['key']}.py"
-                else:
-                    paste = f"del.dog/{(await resp.json())['key']}.py"
+        async with session.post(
+                "https://nekobin.com/api/documents", json={"content": code}) as r:
+            if r.status >= 300:
+                await sent.edit("nekobin.com seems to be down… ( ^^')")
+                return
+            paste = f"nekobin.com/{(await r.json())['result']['key']}.py"
 
         await asyncio.wait([
             msg.delete(),
