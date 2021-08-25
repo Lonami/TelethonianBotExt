@@ -62,11 +62,17 @@ async def init(bot, modules):
             text = ''
 
         async with session.post(
-                "https://nekobin.com/api/documents", json={"content": code}) as r:
+            "https://pasty.lus.pm/api/v1/pastes",
+            json={"content": code},
+            headers={
+                "User-Agent": "TelethonianBot/Version",
+                "Content-Type": "application/json",
+            }
+        ) as r:
             if r.status >= 300:
-                await sent.edit("nekobin.com seems to be down… ( ^^')")
+                await sent.edit("pasty seems to be down… ( ^^')")
                 return
-            paste = f"nekobin.com/{(await r.json())['result']['key']}.py"
+            paste = f"pasty.lus.pm/{(await r.json())['id']}"
 
         await asyncio.wait([
             msg.delete(),
