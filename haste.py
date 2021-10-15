@@ -62,7 +62,7 @@ async def init(bot, modules):
             text = ''
 
         async with session.post(
-            "https://pasty.lus.pm/api/v1/pastes",
+            "https://pasty.lus.pm/api/v2/pastes",
             json={"content": code},
             headers={
                 "User-Agent": "TelethonianBot/Version",
