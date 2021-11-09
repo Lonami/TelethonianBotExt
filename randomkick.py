@@ -131,7 +131,7 @@ async def init(bot, modules):
 
         if chosen.id == self_id:
             await asyncio.sleep(random.randint(10, 20))
-            await edit_save(event)
+            await edit_save(warning_event)
             async with bot.action(GROUP, 'typing'):
                 await asyncio.sleep(random.randint(7, 10))
             await bot.send_message(GROUP, 'Oh darn! That was close 😅')
