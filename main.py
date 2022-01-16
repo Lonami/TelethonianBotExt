@@ -27,8 +27,8 @@ SPAM = (
     "Telethon is free software. That means using it is a right: you are "
     "free to use it for absolutely any purpose whatsoever. However, help "
     "and support with using it is a privilege. If you misbehave or want "
-    "to do bad things, nobody is obligated to help you and you're not "
-    "welcome here."
+    "to do bad things, despite possibly having good intentions, nobody "
+    "is obligated to help you."
 )
 
 OFFTOPIC = {
@@ -43,8 +43,8 @@ TOPIC = (
     "This group is for **usage questions about Telethon only**, and "
     "occasionally about semi-related topics like MTProto. Anything that does "
     "not directly involve any of the two does not belong here, and questions "
-    "regarding general Python knowledge or use of any other libraries **do "
-    "not belong here**. Please ask elsewhere."
+    "regarding general Python knowledge or use of any other libraries do not "
+    "belong here. Please use other groups or search online instead."
 )
 
 UNKNOWN_OFFTOPIC = (
@@ -94,8 +94,8 @@ GOOD_RESOURCES = (
 )
 
 LEARN_PYTHON = (
-    "That issue is no longer related with Telethon. You should learn more "
-    "Python before trying again. " + GOOD_RESOURCES
+    "That issue is no longer related with Telethon, and this group is not "
+    "meant to be a group for learning Python. " + GOOD_RESOURCES
 )
 
 BUG_REPORT = (
