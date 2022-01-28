@@ -9,7 +9,7 @@ template = "The cause of this error is most likely {cause}. To fix it you need t
 with open(os.path.join(os.path.dirname(__file__), "faq.json"), "r", encoding="utf-8") as file:
     errors = json.load(file)
 
-FAQ_URL = 'https://docs.telethon.dev/en/latest/quick-references/faq.html'
+FAQ_URL = 'https://docs.telethon.dev/en/stable/quick-references/faq.html'
 
 async def init(bot):
     @bot.on(events.NewMessage)

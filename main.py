@@ -7,7 +7,7 @@ from telethon import events, custom
 
 READ_FULL = (
     'Please read [Accessing the Full API](https://docs.telethon.dev'
-    '/en/latest/concepts/full-api.html)'
+    '/en/stable/concepts/full-api.html)'
 )
 
 SEARCH = (
@@ -20,7 +20,7 @@ RTD = '[Read The Docs!](https://docs.telethon.dev)'
 RTFD = '[Read The F* Docs!](https://docs.telethon.dev)'
 UPDATES = (
     'Check out [Working with Updates](https://docs.telethon.dev'
-    '/en/latest/basic/updates.html) in the documentation.'
+    '/en/stable/basic/updates.html) in the documentation.'
 )
 
 SPAM = (

@@ -8,12 +8,12 @@ from telethon import TelegramClient, custom, events
 from telethon.extensions import markdown
 
 DOCS = 'TL Reference for [{}](https://lonamiwebs.github.io/Telethon/?q={})'
-DOCS_CLIENT = 'https://docs.telethon.dev/en/latest/modules/client.html#'
+DOCS_CLIENT = 'https://docs.telethon.dev/en/stable/modules/client.html#'
 DOCS_MESSAGE = (
-    'https://docs.telethon.dev/en/latest/'
+    'https://docs.telethon.dev/en/stable/'
     'modules/custom.html#telethon.tl.custom.message.Message.'
 )
-DOCS_EVENTS = 'https://docs.telethon.dev/en/latest/modules/events.html#'
+DOCS_EVENTS = 'https://docs.telethon.dev/en/stable/modules/events.html#'
 
 COMMON_WORDS = re.compile(
     r'\b('
@@ -113,7 +113,7 @@ async def init(bot):
 
         await event.respond(
             f'See the [reference summary for "{what}"](https://docs.telethon.dev/'
-            f'en/latest/quick-references/{what}-reference.html)',
+            f'en/stable/quick-references/{what}-reference.html)',
             reply_to=event.reply_to_msg_id
         )
 
