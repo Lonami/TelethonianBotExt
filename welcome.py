@@ -4,6 +4,7 @@ WELCOME = {}
 
 MAIN_WELCOME = (
     'Hi and welcome to the group. Before asking any questions, **please** '
+    'read the rules from the group\'s description, and don\'t forget to '
     'read [the docs](https://docs.telethon.dev/). Make sure you are '
     'using the latest version with `pip3 install -U telethon`, since most '
     'problems have already been fixed in newer versions.'
