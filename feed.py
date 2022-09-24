@@ -168,7 +168,7 @@ def fmt_stackoverflow(entry):
 async def init(bot):
     github_feed = FeedChecker(
         host='github.com',
-        path='/LonamiWebs/Telethon/commits/master.atom'
+        path='/LonamiWebs/Telethon/commits/v1.atom'
     )
     stackoverflow_feed = FeedChecker(
         host='stackoverflow.com',
@@ -235,7 +235,7 @@ async def main():
     logging.basicConfig(level=logging.DEBUG)
     github_feed = FeedChecker(
         host='github.com',
-        path='/LonamiWebs/Telethon/commits/master.atom'
+        path='/LonamiWebs/Telethon/commits/v1.atom'
     )
     stackoverflow_feed = FeedChecker(
         host='stackoverflow.com',

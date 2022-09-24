@@ -71,7 +71,7 @@ If you need more information, use `logging.DEBUG` instead.
 ALREADY_FIXED = (
     "This issue has already been fixed, but it's not yet available in PyPi. "
     "You can upgrade now with `pip3 install -U https://github.com/LonamiWebs"
-    "/Telethon/archive/master.zip`."
+    "/Telethon/archive/v1.zip`."
 )
 
 GOOD_RESOURCES = (
@@ -216,9 +216,9 @@ async def init(bot):
         ])
 
 
-    @bot.on(events.NewMessage(pattern='(?i)#master', forwards=False))
+    @bot.on(events.NewMessage(pattern='(?i)#(master|v1)', forwards=False))
     async def handler(event):
-        """#master: The bug has been fixed in the `master` branch."""
+        """#master or #v1: The bug has been fixed in the `v1` branch."""
         await asyncio.wait([
             event.delete(),
             event.respond(ALREADY_FIXED, reply_to=event.reply_to_msg_id)
