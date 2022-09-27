@@ -54,6 +54,7 @@ class FeedChecker:
     def _request(self):
         req = [f'GET {self._path} HTTP/1.1',
                f'Host: {self._host}',
+               f'User-Agent: Mozilla/5.0',  # StackOverflow returns 403 otherwise :(
                f'Connection: close',]
         if self._etag:
             req.append(f'If-None-Match: {self._etag}')
