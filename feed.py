@@ -245,17 +245,25 @@ async def main():
 
     # Skip the ones currently in the feed, we already know them
     logging.info('Checking GitHub')
-    await github_feed.poll()
+    gh_entries = await github_feed.poll()
     logging.info('Checking StackOverflow')
-    await stackoverflow_feed.poll()
+    so_entries = await stackoverflow_feed.poll()
 
+    # Remove one entry to pretend we didn't have it
+    github_feed._seen_ids.remove(gh_entries[0].tag('id').text)
+    github_feed._etag = github_feed._last_modified = None
+    stackoverflow_feed._seen_ids.remove(so_entries[0].tag('id').text)
+    stackoverflow_feed._etag = stackoverflow_feed._last_modified = None
     logging.info('Sleeping...')
     await asyncio.sleep(10)
 
     logging.info('Checking GitHub')
-    await github_feed.poll()
+    for entry in await github_feed.poll():
+        logging.info('GitHub entry: %s', fmt_github(entry))
+
     logging.info('Checking StackOverflow')
-    await stackoverflow_feed.poll()
+    for entry in await stackoverflow_feed.poll():
+        logging.info('StackOverflow entry: %s', fmt_stackoverflow(entry))
 
 
 if __name__ == '__main__':
