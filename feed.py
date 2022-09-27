@@ -177,8 +177,16 @@ async def init(bot):
     )
 
     # Skip the ones currently in the feed, we already know them
-    await github_feed.poll()
-    await stackoverflow_feed.poll()
+    try:
+        await github_feed.poll()
+        await stackoverflow_feed.poll()
+    except Exception as e:
+        logging.error('Failed to initialize feeds %s', e)
+        await bot.send_message(
+            10885151,
+            f'Feed could not be initialized ({type(e).__name__}): <pre>{html.escape(str(e))}</pre>'
+        )
+        raise
 
     async def check_feed():
         while bot.is_connected():
