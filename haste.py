@@ -61,22 +61,23 @@ async def init(bot, modules):
             code = msg.raw_text
             text = ''
 
-        async with session.post(
-            "https://pasty.lus.pm/api/v2/pastes",
-            json={"content": code},
-            headers={
-                "User-Agent": "TelethonianBot/Version",
-                "Content-Type": "application/json",
-            }
-        ) as r:
-            if r.status >= 300:
-                await sent.edit("pasty seems to be down… ( ^^')")
-                return
-            paste = f"pasty.lus.pm/{(await r.json())['id']}"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://pasty.lus.pm/api/v2/pastes",
+                json={"content": code},
+                headers={
+                    "User-Agent": "TelethonianBot/Version",
+                    "Content-Type": "application/json",
+                }
+            ) as r:
+                if r.status >= 300:
+                    await sent.edit("pasty seems to be down… ( ^^')")
+                    return
+                paste = f"pasty.lus.pm/{(await r.json())['id']}"
 
-        await asyncio.wait([
-            msg.delete(),
-            sent.edit(f'<a href="tg://user?id={msg.sender_id}">{name}</a> '
-                      f'said: {text} {paste}'
-                      .replace('  ', ' '), parse_mode='html')
-        ])
+            await asyncio.wait([
+                msg.delete(),
+                sent.edit(f'<a href="tg://user?id={msg.sender_id}">{name}</a> '
+                        f'said: {text} {paste}'
+                        .replace('  ', ' '), parse_mode='html')
+            ])
