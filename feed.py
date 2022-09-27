@@ -194,8 +194,7 @@ async def init(bot):
             try:
                 await asyncio.wait_for(
                     bot.disconnected,
-                    timeout=UPDATE_INTERVAL,
-                    loop=bot.loop
+                    timeout=UPDATE_INTERVAL
                 )
             except asyncio.TimeoutError:
                 pass
@@ -234,7 +233,7 @@ async def init(bot):
                     )
 
     # TODO This task is not properly terminated on disconnect
-    bot.loop.create_task(check_feed())
+    asyncio.create_task(check_feed())
 
 
 async def main():

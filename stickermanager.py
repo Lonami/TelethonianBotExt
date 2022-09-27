@@ -261,7 +261,7 @@ async def init(bot: TelegramClient, modules: dict) -> None:
         filename = Path(DATA_FILE_FORMAT.format(ts=int(time())))
         await orig_evt.download_media(filename)
 
-        delete_task = asyncio.ensure_future(event.delete(), loop=bot.loop)
+        delete_task = asyncio.ensure_future(event.delete())
         current_vote_status.clear()
         current_vote = {
             'chat': event.chat_id,
@@ -278,10 +278,10 @@ async def init(bot: TelegramClient, modules: dict) -> None:
             POLL_TEMPLATE.format_map(get_template_data()),
             buttons=[Button.inline(UP, UP_DAT), Button.inline(DOWN, DOWN_DAT)],
             parse_mode='html')
-        pin_task = asyncio.ensure_future(reply_evt.pin(), loop=bot.loop)
+        pin_task = asyncio.ensure_future(reply_evt.pin())
         current_vote['poll'] = reply_evt.id
-        asyncio.ensure_future(wait_for_poll(), loop=bot.loop)
-        await asyncio.gather(delete_task, pin_task, loop=bot.loop)
+        asyncio.ensure_future(wait_for_poll())
+        await asyncio.gather(delete_task, pin_task)
 
     async def wait_for_poll(timeout: int = POLL_TIMEOUT) -> None:
         try:
@@ -297,8 +297,7 @@ async def init(bot: TelegramClient, modules: dict) -> None:
         if not current_vote:
             return False
 
-        unpin_task = asyncio.ensure_future(bot.pin_message(current_vote['chat'], message=None),
-                                           loop=bot.loop)
+        unpin_task = asyncio.ensure_future(bot.pin_message(current_vote['chat'], message=None))
         accepted = current_vote['score'] >= VOTES_REQUIRED
         result_tpl = RESULT_ADDED if accepted else RESULT_REJECTED
         current_vote['result'] = result_tpl.format_map(get_template_data())
