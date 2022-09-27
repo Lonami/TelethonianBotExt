@@ -49,7 +49,7 @@ TOPIC = (
 
 UNKNOWN_OFFTOPIC = (
     "I don't know of any off-topic group for this chat! Maybe you want to "
-    "visit the on-topic @TelethonChat, or the off-topic @TelethonOffTopic?"
+    "visit the on-topic @TelethonChat, or the off-topic @offtopica?"
 )
 
 ASK = (
@@ -191,7 +191,7 @@ async def init(bot):
 
     @bot.on(events.NewMessage(pattern='(?i)#(ot|offtopic)', forwards=False))
     async def handler(event):
-        """#ot, #offtopic: Tells the user to move to @TelethonOffTopic."""
+        """#ot, #offtopic: Tells the user to move to an offtopic channel."""
         await asyncio.wait([
             event.delete(),
             event.respond(OFFTOPIC.get(event.chat_id, UNKNOWN_OFFTOPIC), reply_to=event.reply_to_msg_id)
