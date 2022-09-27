@@ -93,7 +93,7 @@ class FeedChecker:
             return
 
         if status != 200:
-            raise ValueError('Bad status code: {}'.format(status))
+            raise ValueError('Bad status code for {}: {}'.format(self._host, status))
 
         # StackOverflow has 'Content-Length:'
         content_len = _header(headers, b'Content-Length:')
