@@ -1,6 +1,5 @@
 from telethon import events, errors
-
-WELCOME = {}
+from telethon.tl import types
 
 MAIN_WELCOME = (
     'Hi and welcome to the group. Before asking any questions, **please** '
@@ -11,12 +10,12 @@ MAIN_WELCOME = (
 )
 
 WELCOME = {
-    -1001109500936: ((MAIN_WELCOME,), {}),
-    -1001200633650: ((), {'file': 'plugins/stickers/hello.webp'}),
+    1109500936: ((MAIN_WELCOME,), {}),
+    1200633650: ((), {'file': 'plugins/stickers/hello.webp'}),
 }
 
 FAREWELL = {
-    -1001200633650: ((), {'file': 'plugins/stickers/bye.webp'}),
+    1200633650: ((), {'file': 'plugins/stickers/bye.webp'}),
 }
 
 
@@ -34,13 +33,15 @@ async def init(bot):
     last_welcome = {}
     last_farewell = {}
 
-    @bot.on(events.ChatAction)
+    @bot.on(events.Raw(types.UpdateChannelParticipant))
     async def handler(event):
-        chat_id = event.chat_id
-        joined = event.user_joined or event.user_added
-        left = event.user_left or event.user_kicked
+        chat_id = event.channel_id
+        # https://t.me/c/1109500936/472212
+        np = event.new_participant
         welcome = WELCOME.get(chat_id, None)
         farewell = FAREWELL.get(chat_id, None)
+        joined = np and isinstance(np, types.ChannelParticipant)
+        left = np and isinstance(np, ChannelParticipantLeft)
         if not joined and not left:
             return
         if not welcome and not farewell:
@@ -54,4 +55,4 @@ async def init(bot):
             last_map = last_farewell
 
         await delete(last_map, chat_id)
-        last_map[chat_id] = await event.reply(*args, **kwargs)
+        last_map[chat_id] = await bot.send_message(chat_id, *args, **kwargs)
