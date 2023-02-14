@@ -1,4 +1,5 @@
 from telethon import events, errors
+from telethon.tl import types
 
 WELCOME = {}
 
@@ -11,12 +12,12 @@ MAIN_WELCOME = (
 )
 
 WELCOME = {
-    -1001109500936: ((MAIN_WELCOME,), {}),
-    -1001200633650: ((), {'file': 'plugins/stickers/hello.webp'}),
+    1109500936: ((MAIN_WELCOME,), {}),
+    1200633650: ((), {'file': 'plugins/stickers/hello.webp'}),
 }
 
 FAREWELL = {
-    -1001200633650: ((), {'file': 'plugins/stickers/bye.webp'}),
+    1200633650: ((), {'file': 'plugins/stickers/bye.webp'}),
 }
 
 
@@ -34,13 +35,15 @@ async def init(bot):
     last_welcome = {}
     last_farewell = {}
 
-    @bot.on(events.ChatAction)
+    @bot.on(events.Raw(types.UpdateChannelParticipant))
     async def handler(event):
-        chat_id = event.chat_id
-        joined = event.user_joined or event.user_added
-        left = event.user_left or event.user_kicked
+        chat_id = event.channel_id
+        # https://t.me/c/1109500936/472212
+        np = event.new_participant
         welcome = WELCOME.get(chat_id, None)
         farewell = FAREWELL.get(chat_id, None)
+        joined = isinstance(np, types.ChannelParticipant)
+        left = isinstance(np, ChannelParticipantLeft)
         if not joined and not left:
             return
         if not welcome and not farewell:
