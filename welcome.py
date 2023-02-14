@@ -1,8 +1,6 @@
 from telethon import events, errors
 from telethon.tl import types
 
-WELCOME = {}
-
 MAIN_WELCOME = (
     'Hi and welcome to the group. Before asking any questions, **please** '
     'read the rules from the group\'s description, and don\'t forget to '
@@ -57,4 +55,4 @@ async def init(bot):
             last_map = last_farewell
 
         await delete(last_map, chat_id)
-        last_map[chat_id] = await event.reply(*args, **kwargs)
+        last_map[chat_id] = await bot.send_message(chat_id, *args, **kwargs)
