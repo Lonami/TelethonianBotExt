@@ -41,7 +41,7 @@ async def init(bot):
         welcome = WELCOME.get(chat_id, None)
         farewell = FAREWELL.get(chat_id, None)
         joined = np and isinstance(np, types.ChannelParticipant)
-        left = np and isinstance(np, ChannelParticipantLeft)
+        left = np and isinstance(np, types.ChannelParticipantLeft)
         if not joined and not left:
             return
         if not welcome and not farewell:
