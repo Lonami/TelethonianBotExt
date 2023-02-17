@@ -232,8 +232,7 @@ async def init(bot):
                         link_preview=False
                     )
 
-    # TODO This task is not properly terminated on disconnect
-    asyncio.create_task(check_feed())
+    return asyncio.create_task(check_feed())
 
 
 async def main():

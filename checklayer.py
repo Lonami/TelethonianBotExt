@@ -156,8 +156,7 @@ async def init(bot):
             except asyncio.TimeoutError:
                 pass
 
-    # TODO This task is not properly terminated on disconnect
-    asyncio.create_task(check_sha())
+    return asyncio.create_task(check_sha())
 
 
 async def main():

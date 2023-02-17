@@ -53,11 +53,15 @@ async def _init_plugin(plugin, kwargs):
     try:
         logging.warning(f'Loading plugin {plugin.__name__}…')
         start = time.time()
-        await plugin.init(**kwargs)
+        ret = await plugin.init(**kwargs)
         took = time.time() - start
         logging.warning(f'Loaded plugin {plugin.__name__} (took {took:.2f}s)')
     except Exception:
         logging.exception(f'Failed to load plugin {plugin}')
+    else:
+        # Plugins may return a task that should not just be lost.
+        if asyncio.iscoroutinefunction(ret):
+            await ret
 
 
 async def start_plugins(bot, plugins):
