@@ -31,7 +31,7 @@ class Info:
             with open(self._path, 'w', encoding='utf-8') as fd:
                 json.dump(self._info, fd)
         self._info = None
-        self._orig = Noen
+        self._orig = None
 
 
 @dataclass
