@@ -26,7 +26,7 @@ class Info:
         self._info = dict(self._orig)
         return self._info
 
-    def __exit__(self):
+    def __exit__(self, *e):
         if self._info != self._orig:
             with open(self._path, 'w', encoding='utf-8') as fd:
                 json.dump(self._info, fd)
