@@ -27,8 +27,10 @@ async def init(bot, modules):
             return
 
         msg = await event.get_reply_message()
-        if msg.photo:
-            await event.respond('Don\'t send photos with your code or errors. Paste the content in del.dog instead.')
+        if msg.photo or msg.document:
+            await event.respond('Hey, that\'s not how you send faulty code or an error returned by the library.' \
+                               ' Please send a minimal reproducible code.' \
+                               '\nWhen sending a code snippet or error use either nekobin.com or any other preferred pastebin website.')
             return
         if len(msg.raw_text or '') < 200:
             sent = await event.respond('Not bothering to paste such a short message.')
