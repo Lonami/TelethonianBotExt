@@ -77,9 +77,9 @@ async def init(bot, modules):
                     return
                 paste = f"pasty.lus.pm/{(await r.json())['id']}"
 
-            await asyncio.wait([
+            await asyncio.gather(
                 msg.delete(),
                 sent.edit(f'<a href="tg://user?id={msg.sender_id}">{name}</a> '
                         f'said: {text} {paste}'
                         .replace('  ', ' '), parse_mode='html')
-            ])
+            )

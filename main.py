@@ -124,20 +124,20 @@ async def init(bot):
     @bot.on(events.NewMessage(pattern='#full', forwards=False))
     async def handler(event):
         """#full: Advises to read "Accessing the full API" in the docs."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(READ_FULL, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='#search (.+)', forwards=False))
     async def handler(event):
         """#search query: Searches for "query" in the method reference."""
         query = urllib.parse.quote(event.pattern_match.group(1))
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(SEARCH.format(query), reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#ref (.+)', forwards=False))
@@ -145,104 +145,104 @@ async def init(bot):
         """#ref query: Like #search but shows the query."""
         q1 = event.pattern_match.group(1)
         q2 = urllib.parse.quote(q1)
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(DOCS.format(q1, q2), reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='#(?:rt(f)?d|docs)', forwards=False))
     async def handler(event):
         """#docs or #rtd: Tells the user to please read the docs."""
         rtd = RTFD if event.pattern_match.group(1) else RTD
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(rtd, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='#(updates|events)', forwards=False))
     async def handler(event):
         """#updates: Advices the user to read "Working with Updates"."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(UPDATES, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#(ask|question)', forwards=False))
     async def handler(event):
         """#ask or #question: Advices the user to ask a better question."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(
                 ASK, reply_to=event.reply_to_msg_id, link_preview=False)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#spam(mer|ming)?', forwards=False))
     async def handler(event):
         """#spam, #spammer, #spamming: Informs spammers that they are not welcome here."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(SPAM, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#(ot|offtopic)', forwards=False))
     async def handler(event):
         """#ot, #offtopic: Tells the user to move to an offtopic channel."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(OFFTOPIC.get(event.chat_id, UNKNOWN_OFFTOPIC), reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#topic', forwards=False))
     async def handler(event):
         """#topic: Explains the topic of the group to the user."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(TOPIC, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#log(s|ging)?', forwards=False))
     async def handler(event):
         """#log, #logs or #logging: Explains how to enable logging."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(LOGGING, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#(master|v1)', forwards=False))
     async def handler(event):
         """#master or #v1: The bug has been fixed in the `v1` branch."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(ALREADY_FIXED, reply_to=event.reply_to_msg_id)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#(learn|python)', forwards=False))
     async def handler(event):
         """#learn or #python: Tells the user to learn some Python first."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(
                 LEARN_PYTHON, reply_to=event.reply_to_msg_id, link_preview=False)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#bugs?', forwards=False))
     async def handler(event):
         """#bug or #bugs: Advices the user to report bugs in GitHub."""
-        await asyncio.wait([
+        await asyncio.gather(
             event.delete(),
             event.respond(
                 BUG_REPORT, reply_to=event.reply_to_msg_id, link_preview=False)
-        ])
+        )
 
 
     @bot.on(events.NewMessage(pattern='(?i)#(list|help)', forwards=False))
