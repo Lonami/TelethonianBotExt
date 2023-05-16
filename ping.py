@@ -12,4 +12,4 @@ async def init(bot):
         d = time.time() - s
         await message.edit(f'Pong! __(reply took {d:.2f}s)__')
         await asyncio.sleep(5)
-        await asyncio.wait([event.delete(), message.delete()])
+        await asyncio.gather(event.delete(), message.delete())
