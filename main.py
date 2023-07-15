@@ -49,7 +49,7 @@ TOPIC = (
 
 UNKNOWN_OFFTOPIC = (
     "I don't know of any off-topic group for this chat! Maybe you want to "
-    "visit the on-topic @TelethonChat, or the off-topic @offtopica?"
+    "visit the on-topic @TelethonChat?"
 )
 
 ASK = (
