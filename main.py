@@ -34,7 +34,7 @@ SPAM = (
 OFFTOPIC = {
     -1001109500936:
     'That is not related to Telethon. '
-    'You may continue the conversation in a different group, such as @offtopica',
+    'Please move to a different group with the correct topic to continue that conversation',
     -1001200633650:
     'That seems to be related to Telethon. Try asking in @TelethonChat'
 }
