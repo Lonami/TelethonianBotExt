@@ -235,14 +235,18 @@ async def init(bot):
     async def check_feed():
         while bot.is_connected():
             # Wait until we disconnect or a timeout occurs
+            fetch_now_task = asyncio.create_task(fetch_now.wait())
             try:
-                await asyncio.wait_for(
+                _, pending = await asyncio.wait_for(
                     asyncio.wait((
                         bot.disconnected,
-                        fetch_now.wait()
+                        fetch_now_task
                     ), return_when=asyncio.FIRST_COMPLETED),
                     timeout=UPDATE_INTERVAL
                 )
+                for task in pending:
+                    task.cancel()
+                    await task
             except asyncio.TimeoutError:
                 pass
 
