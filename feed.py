@@ -217,10 +217,11 @@ async def init(bot):
 
     @bot.on(events.NewMessage(pattern='#feed ([a-fA-F\d]+)', from_users=10885151))
     async def handler(event):
+        last_hash = event.pattern_match.group(1)
+        m = await event.respond(f'Forcibly fetching feed until {last_hash}...')
         ids = set()
         commits = []
-        last_hash = event.pattern_match.group(1)
-        all_entries = github_feed.poll(force=True)
+        all_entries = await github_feed.poll(force=True)
         for entry in map(parse_github, all_entries):
             if entry.commit.startswith(last_hash):
                 break
@@ -228,7 +229,7 @@ async def init(bot):
             commits.append(entry.commit[:7])
 
         github_feed.set_stale(ids)
-        await event.respond(f'Marked {len(commits)} commits as stale: {", ".join(commits)}')
+        await m.edit(f'Marked {len(commits)} commits as stale: {", ".join(commits)}')
         fetch_now.set()
 
     async def check_feed():
