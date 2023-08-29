@@ -5,6 +5,8 @@ import logging
 import sys
 import typing
 import xml.dom.minidom
+from dataclasses import dataclass
+from telethon import events
 
 UPDATE_INTERVAL = 5 * 60
 
@@ -51,25 +53,25 @@ class FeedChecker:
         self._last_modified = None
         self._seen_ids = set()
 
-    def _request(self):
+    def _request(self, *, use_cache):
         req = [f'GET {self._path} HTTP/1.1',
                f'Host: {self._host}',
                f'User-Agent: Mozilla/5.0',  # StackOverflow returns 403 otherwise :(
                f'Connection: close',]
-        if self._etag:
+        if use_cache and self._etag:
             req.append(f'If-None-Match: {self._etag}')
-        if self._last_modified:
+        if use_cache and self._last_modified:
             req.append(f'If-Modified-Since: {self._last_modified}')
 
         req.extend(('', ''))
         return '\r\n'.join(req).encode()
 
-    async def _fetch(self):
+    async def _fetch(self, *, force):
         # We could use `aiohttp` but this is more fun
         rd, wr = await asyncio.open_connection(self._host, 443, ssl=True)
 
         # Send HTTP request
-        req = self._request()
+        req = self._request(use_cache=not force)
         logging.debug('Sending to %s: %s', self._host, req)
         wr.write(req)
         await wr.drain()
@@ -127,8 +129,13 @@ class FeedChecker:
 
         return xml
 
-    async def poll(self):
-        feed = await self._fetch()
+    def set_stale(self, ids):
+        self._etag = None
+        self._last_modified = None
+        self._seen_ids -= ids
+
+    async def poll(self, *, force=False):
+        feed = await self._fetch(force=force)
 
         new = []
         if feed is None:  # not modified
@@ -136,14 +143,26 @@ class FeedChecker:
 
         for entry in feed.tags('entry'):
             entry_id = entry.tag('id').text
-            if entry_id not in self._seen_ids:
+            if force or entry_id not in self._seen_ids:
                 self._seen_ids.add(entry_id)
                 new.append(entry)
 
         return new
 
 
-def fmt_github(entry):
+@dataclass
+class GitHubEntry:
+    id: str
+    title: str
+    link: str
+    commit: str
+    uri: str
+    name: str
+
+
+def parse_github(entry):
+    id = entry.tag('id').text
+
     link = entry.tag('link')['href']
     commit = link.rsplit('/', maxsplit=1)[-1]
     title = html.escape(entry.tag('title').text)
@@ -152,7 +171,13 @@ def fmt_github(entry):
     name = html.escape(author.tag('name').text)
     uri = author.tag('uri').text
 
-    return f'<b>{title}</b> (<a href="{link}">{commit[:7]}</a> by <a href="{uri}">{name}</a>)'
+    return GitHubEntry(id, title, link, commit, uri, name)
+
+
+def fmt_github(entry):
+    parsed = parse_github(entry)
+
+    return f'<b>{parsed.title}</b> (<a href="{parsed.link}">{parsed.commit[:7]}</a> by <a href="{parsed.uri}">{parsed.name}</a>)'
 
 
 def fmt_stackoverflow(entry):
@@ -188,12 +213,33 @@ async def init(bot):
         )
         raise
 
+    fetch_now = asyncio.Event()
+
+    @bot.on(events.NewMessage(pattern='#feed ([a-fA-F\d]+)', from_users=10885151))
+    async def handler(event):
+        ids = set()
+        commits = []
+        last_hash = event.pattern_match.group(1)
+        all_entries = github_feed.poll(force=True)
+        for entry in map(parse_github, all_entries):
+            if entry.commit.startswith(last_hash):
+                break
+            ids.add(entry.id)
+            commits.append(entry.commit[:7])
+
+        github_feed.set_stale(ids)
+        await event.respond(f'Marked {len(commits)} commits as stale: {", ".join(commits)}')
+        fetch_now.set()
+
     async def check_feed():
         while bot.is_connected():
             # Wait until we disconnect or a timeout occurs
             try:
                 await asyncio.wait_for(
-                    bot.disconnected,
+                    asyncio.wait((
+                        bot.disconnected,
+                        fetch_now.wait()
+                    ), return_when=asyncio.FIRST_COMPLETED),
                     timeout=UPDATE_INTERVAL
                 )
             except asyncio.TimeoutError:
