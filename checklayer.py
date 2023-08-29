@@ -131,7 +131,7 @@ async def init(bot):
             try:
                 resp = await gh_get_repository_content(REPO_OWNER, REPO_NAME, TL_PATH)
             except Exception as e:
-                logging.warning('Failed to fetch api.tl: %s', e)
+                logging.exception('Failed to fetch api.tl: %s', e)
                 resp = None
 
             with INFO as info:
