@@ -247,8 +247,12 @@ async def init(bot):
                 for task in pending:
                     task.cancel()
                     await task
-            except asyncio.TimeoutError:
+            except (asyncio.TimeoutError, asyncio.CancelledError):
                 pass
+            except Exception:
+                logging.exception('Unhandled error while waiting for feed timeout')
+            finally:
+                fetch_now.clear()
 
             # GitHub feed
             try:
