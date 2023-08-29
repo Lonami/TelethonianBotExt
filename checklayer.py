@@ -89,7 +89,7 @@ async def https_get(url: str, headers: Mapping[str, str]) -> (Mapping[str, str],
                 body += await rd.readexactly(length)
                 await rd.readline()
         elif length := headers.get('content-length'):
-            body = await rd.readexactly(length)
+            body = await rd.readexactly(int(length))
         else:
             raise ValueError(f'Don\'t know how to read response from {url.hostname}')
 
