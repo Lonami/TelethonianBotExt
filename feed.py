@@ -260,19 +260,23 @@ async def init(bot):
             except Exception as e:
                 logging.warning('Failed to fetch GitHub RSS feed %s', e)
             else:
-                logging.warning('Attempting to send %d GH entries', len(entries))
-                # Each message has 3 entities (bold, link, link)
-                # A message can have up to 100 entities.
-                # The limit of commits per message is 33.
-                commits_per_msg = 33
-                while entries:
-                    await bot.send_message(
-                        'TelethonUpdates',
-                        '\n'.join(fmt_github(e) for e in itertools.islice(entries, commits_per_msg)),
-                        parse_mode='html',
-                        link_preview=False
-                    )
-                    entries = entries[commits_per_msg:]
+                if entries:
+                    logging.warning('Attempting to send %d GH entries', len(entries))
+                try:
+                    # Each message has 3 entities (bold, link, link)
+                    # A message can have up to 100 entities.
+                    # The limit of commits per message is 33.
+                    commits_per_msg = 33
+                    while entries:
+                        await bot.send_message(
+                            'TelethonUpdates',
+                            '\n'.join(fmt_github(e) for e in itertools.islice(entries, commits_per_msg)),
+                            parse_mode='html',
+                            link_preview=False
+                        )
+                        entries = entries[commits_per_msg:]
+                except Exception:
+                    logging.exception('Failed to send GH entries')
 
             # StackOverflow feed
             try:
@@ -280,14 +284,18 @@ async def init(bot):
             except Exception as e:
                 logging.warning('Failed to fetch StackOverflow RSS feed %s', e)
             else:
-                logging.warning('Attempting to send %d SO entries', len(entries))
-                for entry in entries:
-                    await bot.send_message(
-                        'TelethonChat',
-                        fmt_stackoverflow(entry),
-                        parse_mode='html',
-                        link_preview=False
-                    )
+                if entries:
+                    logging.warning('Attempting to send %d SO entries', len(entries))
+                try:
+                    for entry in entries:
+                        await bot.send_message(
+                            'TelethonChat',
+                            fmt_stackoverflow(entry),
+                            parse_mode='html',
+                            link_preview=False
+                        )
+                except Exception:
+                    logging.exception('Failed to send SO entries')
 
     return asyncio.create_task(check_feed())
 
