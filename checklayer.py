@@ -142,7 +142,7 @@ async def init(bot):
                     if info['sha'] is None:
                         await bot.send_message(MSG_WHO, f'Initialized SHA for `api.tl`')
                     elif resp.body['sha'] != info['sha']:
-                        await bot.send_message(MSG_WHO, f'New SHA for `api.tl` (likely [new layer]({resp.body["html_url"]}))')
+                        await bot.send_message(MSG_WHO, f'New SHA for `api.tl` (likely [new layer]({resp.body["html_url"]}))', link_preview=False)
 
                     info['etag'] = resp.etag
                     info['last-modified'] = resp.last_modified
