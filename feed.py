@@ -256,6 +256,7 @@ async def init(bot):
             except Exception as e:
                 logging.warning('Failed to fetch GitHub RSS feed %s', e)
             else:
+                logging.warning('Attempting to send %d GH entries', len(entries))
                 # Each message has 3 entities (bold, link, link)
                 # A message can have up to 100 entities.
                 # The limit of commits per message is 33.
@@ -275,6 +276,7 @@ async def init(bot):
             except Exception as e:
                 logging.warning('Failed to fetch StackOverflow RSS feed %s', e)
             else:
+                logging.warning('Attempting to send %d SO entries', len(entries))
                 for entry in entries:
                     await bot.send_message(
                         'TelethonChat',
