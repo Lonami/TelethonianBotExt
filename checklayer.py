@@ -44,7 +44,7 @@ class Response:
 MSG_WHO = 10885151
 REPO_OWNER = 'telegramdesktop'
 REPO_NAME = 'tdesktop'
-TL_PATH = 'Telegram/SourceFiles/mtproto/scheme/layer.tl'
+TL_PATH = 'Telegram/SourceFiles/mtproto/scheme/api.tl'
 CHECK_INTERVAL = 24 * 60 * 60
 INFO = Info(os.path.join(os.path.dirname(__file__), 'latest-tl.json'))
 
