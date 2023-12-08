@@ -32,7 +32,7 @@ def init(bot: TelegramClient):
     @bot.on(
         events.NewMessage(
             pattern=re.compile(
-                r"#(speed|upload|download)", flags=re.DOTALL | re.IGNORECASE
+                r"#(speed|upload|download)", flags=re.IGNORECASE
             ),
             forwards=False,
         )
