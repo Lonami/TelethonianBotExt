@@ -22,6 +22,7 @@ def init(bot: TelegramClient):
                 flags=re.DOTALL | re.IGNORECASE,
             ),
             forwards=False,
+            outgoing=False,
         )
     )
     async def handler(event):
