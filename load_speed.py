@@ -40,4 +40,4 @@ def init(bot: TelegramClient):
     async def handler(event):
         """Respond to messages like '#speed'"""
         await event.delete()
-        await event.respond(RESPONSE)
+        await event.respond(RESPONSE, reply_to=event.message.reply_to_msg_id)
