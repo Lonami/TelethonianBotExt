@@ -27,7 +27,7 @@ def init(bot: TelegramClient):
     )
     async def handler(event):
         """Respond to messages like 'speed up my downloads'"""
-        await event.reply(RESPONSE)
+        await event.reply(RESPONSE, link_preview=False)
 
     @bot.on(
         events.NewMessage(
@@ -40,4 +40,4 @@ def init(bot: TelegramClient):
     async def handler(event):
         """Respond to messages like '#speed'"""
         await event.delete()
-        await event.respond(RESPONSE, reply_to=event.message.reply_to_msg_id)
+        await event.respond(RESPONSE, reply_to=event.message.reply_to_msg_id, link_preview=False)
