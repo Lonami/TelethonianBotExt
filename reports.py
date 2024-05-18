@@ -43,7 +43,7 @@ async def init(bot: TelegramClient):
         reports: Union[ReportedMessages, None] = REPORTS.get(event.chat_id, None)
         reply_message: Message = await event.get_reply_message()
 
-        if not (event.file or any(isinstance(entity, (
+        if not (reply_message.file or any(isinstance(entity, (
             MessageEntityEmail,
             MessageEntityMention,
             MessageEntityMentionName,
