@@ -59,8 +59,8 @@ async def _init_plugin(plugin, kwargs):
     except Exception:
         logging.exception(f'Failed to load plugin {plugin}')
     else:
-        # Plugins may return a task that should not just be lost.
-        if asyncio.iscoroutinefunction(ret):
+        # Plugins may return a coroutine that should not just be lost.
+        if asyncio.iscoroutine(ret):
             await ret
 
 
