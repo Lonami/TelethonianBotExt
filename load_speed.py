@@ -14,7 +14,7 @@ RESPONSE = (
 )
 
 
-def init(bot: TelegramClient):
+async def init(bot: TelegramClient):
     @bot.on(
         events.NewMessage(
             pattern=re.compile(
