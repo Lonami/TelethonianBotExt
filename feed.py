@@ -297,7 +297,7 @@ async def init(bot):
                 except Exception:
                     logging.exception('Failed to send SO entries')
 
-    return asyncio.create_task(check_feed())
+    return check_feed()
 
 
 async def main():

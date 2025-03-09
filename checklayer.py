@@ -156,7 +156,7 @@ async def init(bot):
             except asyncio.TimeoutError:
                 pass
 
-    return asyncio.create_task(check_sha())
+    return check_sha()
 
 
 async def main():
