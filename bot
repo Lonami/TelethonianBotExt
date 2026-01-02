@@ -1,0 +1,50 @@
+from telethon import TelegramClient, events
+import openai
+
+# ====== MA'LUMOTLARING ======
+api_id = 12345678
+api_hash = "API_HASHINGNI_BU_YERGA"
+session_name = "ai_userbot"
+
+openai.api_key = "OPENAI_API_KEYING"
+
+# ====== JAVOB BERMAYDIGANLAR ======
+BLACKLIST = [
+    "username1",     # @username orqali
+    "username2",
+    123456789,       # user ID orqali
+]
+
+client = TelegramClient(session_name, api_id, api_hash)
+
+# ====== AI FUNKSIYA ======
+def ai_javob(matn):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "Sen muloyim va qisqa javob beradigan yordamchisan"},
+            {"role": "user", "content": matn}
+        ]
+    )
+    return response.choices[0].message.content
+
+# ====== XABAR KELGANDA ======
+@client.on(events.NewMessage(incoming=True))
+async def handler(event):
+    if not event.is_private:
+        return
+
+    sender = await event.get_sender()
+
+    # Username yoki ID tekshirish
+    if sender.username in BLACKLIST or sender.id in BLACKLIST:
+        return  # JAVOB BERMAYDI ❌
+
+    text = event.message.message
+    javob = ai_javob(text)
+    await event.reply(javob)
+
+# ====== START ======
+client.start()
+print("🤖 AI userbot blacklist bilan ishga tushdi")
+client.run_until_disconnected()
